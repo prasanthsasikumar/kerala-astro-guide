@@ -1,0 +1,15 @@
+node_modules/
+dist/
+dist-*/
+.DS_Store
+.env*.local
+*.log
+
+# Full edition only (local use, never published): private texts, their extract scripts and
+# tests, the full data export, source artwork, and internal notes.
+src/private/
+test/private/
+public/data/
+public/charticon.png
+assets-src/
+CONTRIBUTING.md

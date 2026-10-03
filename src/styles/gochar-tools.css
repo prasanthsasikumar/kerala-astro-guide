@@ -1,0 +1,41 @@
+/* Gocharam / Panchanga shuddhi / Date converter / Rasi pramanam */
+.gt-caption { caption-side: top; text-align: center; font-weight: 700; padding: var(--space-xs); font-family: var(--font-display); font-size: var(--text-md); }
+.gt-retro { color: var(--color-accent); }
+
+table.data.ps-grid { font-size: var(--text-sm); }
+table.data.ps-grid th:not(:first-child), table.data.ps-grid td:not(:first-child) { text-align: center; width: 11%; }
+table.data.ps-grid td:not(:first-child) { padding: 0; }
+table.data.ps-grid th { vertical-align: middle; }
+table.data.ps-grid td.ps-date { white-space: nowrap; }
+.ps-cell { display: block; width: 100%; min-height: 36px; border: 0; font: inherit; font-weight: 700; cursor: pointer; color: var(--color-accent-ink); }
+.ps-cell.good { background: var(--color-good); }
+.ps-cell.bad { background: var(--color-bad); }
+.ps-cell:hover { filter: brightness(1.1); }
+.ps-cell:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -3px; }
+tr.ps-selected td.ps-date { background: var(--color-accent-soft); font-weight: 700; }
+.ps-legend { display: flex; flex-wrap: wrap; gap: var(--space-md); font-size: var(--text-sm); color: var(--color-ink-2); }
+.ps-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: var(--space-2xs); }
+.ps-legend .good { background: var(--color-good); }
+.ps-legend .bad { background: var(--color-bad); }
+.ps-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: var(--space-lg); align-items: start; }
+.ps-detail { position: sticky; top: var(--space-md); }
+.ps-detail h3 { margin-bottom: var(--space-sm); }
+.ps-detail ul { list-style: none; margin: 0; padding: 0; }
+.ps-detail li { padding: var(--space-xs) 0; border-bottom: var(--rule-hair); display: flex; gap: var(--space-xs); align-items: baseline; }
+.ps-detail li:last-child { border-bottom: 0; }
+.ps-detail .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.ps-detail .dot.good { background: var(--color-good); }
+.ps-detail .dot.bad { background: var(--color-bad); }
+@media (max-width: 860px) {
+  .ps-layout { grid-template-columns: minmax(0, 1fr); }
+  .ps-detail { position: static; order: -1; }
+}
+
+.dc-result { font-size: var(--text-lg); font-weight: 700; font-family: var(--font-display); }
+.dc-sub { white-space: pre-line; line-height: 1.8; margin: 0; }
+table.data.rp-table td.r, table.data.rp-table th.r { font-variant-numeric: tabular-nums; }
+
+/* the shared place picker spans 2 columns, which adds an implicit column (overflow) when only one fits */
+@media (max-width: 520px) {
+  .gt-form .field { grid-column: auto !important; }
+}

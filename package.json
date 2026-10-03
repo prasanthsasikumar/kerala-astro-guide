@@ -1,0 +1,25 @@
+{
+  "name": "kerala-astro-guide",
+  "version": "1.0.0",
+  "description": "Kerala astrology calculations in the browser: horoscope, porutham, prashnam, panchangam",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:public": "VITE_EDITION=public vite build",
+    "preview": "vite preview",
+    "test": "node --import ./test/register.mjs --test \"test/**/*.test.mjs\"",
+    "test:public": "VITE_EDITION=public node --import ./test/register.mjs --test \"test/*.test.mjs\"",
+    "check-public": "node scripts/check-public.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "AGPL-3.0-or-later",
+  "devDependencies": {
+    "vite": "^8.3.2"
+  },
+  "dependencies": {
+    "sweph-wasm": "^2.6.9"
+  },
+  "private": true,
+  "type": "module"
+}

@@ -1,0 +1,17 @@
+/* Prashnam + Divasa panchangam (shared). Colours only via tokens. */
+.pr-band { font-family: var(--font-display); font-size: var(--text-lg); color: var(--color-accent); margin: 0 0 var(--space-sm); }
+.pr-yes-good { color: var(--color-good); font-weight: 700; }
+.pr-yes-bad { color: var(--color-bad); font-weight: 700; }
+table.data tr.pr-section th { background: var(--color-paper-3); color: var(--color-ink); }
+table.data tr.is-now td { background: var(--color-accent-soft); }
+table.data td.pr-detail { color: var(--color-ink-2); font-size: var(--text-xs); line-height: 1.5; }
+table.data tr.sv-bad td { background: color-mix(in oklch, var(--color-bad) 30%, var(--color-surface)); }
+table.data tr.sv-good td { background: color-mix(in oklch, var(--color-good) 30%, var(--color-surface)); }
+table.data tr.sv-mixed td { background: color-mix(in oklch, var(--color-turmeric) 30%, var(--color-surface)); }
+.pr-swarna { display: flex; flex-wrap: wrap; gap: var(--space-2xs); }
+.pr-swarna label { display: inline-flex; align-items: center; gap: 2px; font-size: var(--text-sm); min-width: 34px; }
+.pr-print-sep { break-after: page; height: 0; }
+.pr-result { font-family: var(--font-display); font-size: var(--text-md); }
+@media print {
+  .pr-print .card, .pr-print .table-wrap { border: 0; }
+}

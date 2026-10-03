@@ -1,0 +1,106 @@
+/* Hallmark · app shell (not a marketing page: macrostructure n/a) · tone: utilitarian almanac
+ * theme: custom "palm-leaf almanac, ink and kumkum" · paper oklch(96.5% 0.012 85) · accent oklch(52% 0.17 32) kumkum
+ * fonts: Rachana (display, Malayalam traditional) + Meera (body) · axes: light / classical-serif / warm
+ */
+
+@font-face { font-family: "Rachana"; src: url("/fonts/Rachana.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Meera"; src: url("/fonts/Meera.ttf") format("truetype"); font-display: swap; }
+
+:root {
+  color-scheme: light;
+
+  /* paper + ink */
+  --color-paper: oklch(96.5% 0.012 85);
+  --color-paper-2: oklch(93.5% 0.016 85);
+  --color-paper-3: oklch(90% 0.02 82);
+  --color-surface: oklch(98.8% 0.006 85);
+  --color-ink: oklch(24% 0.02 60);
+  --color-ink-2: oklch(42% 0.02 60);
+  --color-ink-3: oklch(56% 0.018 60);
+  --color-rule: oklch(84% 0.02 80);
+  --color-rule-strong: oklch(70% 0.03 70);
+
+  /* kumkum accent, turmeric secondary */
+  --color-accent: oklch(52% 0.17 32);
+  --color-accent-ink: oklch(98% 0.01 85);
+  --color-accent-soft: oklch(92% 0.04 40);
+  --color-turmeric: oklch(78% 0.14 85);
+  --color-good: oklch(50% 0.11 150);
+  --color-bad: oklch(50% 0.16 28);
+  --color-focus: oklch(50% 0.16 255);
+
+  /* type */
+  --font-display: "Rachana", "Noto Serif Malayalam", Georgia, serif;
+  --font-body: "Meera", "Noto Sans Malayalam", system-ui, sans-serif;
+  --font-num: ui-monospace, "SF Mono", Menlo, monospace;
+  --text-xs: 0.78rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.2rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-scale: 1;
+
+  /* 4pt spacing */
+  --space-3xs: 2px;
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --rule-hair: 1px solid var(--color-rule);
+  --rule-strong: 1px solid var(--color-rule-strong);
+
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-in: cubic-bezier(0.5, 0, 0.75, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur-med: 200ms;
+
+  --sidebar-w: 248px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-paper: oklch(21% 0.012 60);
+    --color-paper-2: oklch(25% 0.014 60);
+    --color-paper-3: oklch(30% 0.016 60);
+    --color-surface: oklch(23.5% 0.012 60);
+    --color-ink: oklch(92% 0.012 85);
+    --color-ink-2: oklch(78% 0.014 85);
+    --color-ink-3: oklch(64% 0.014 85);
+    --color-rule: oklch(34% 0.014 60);
+    --color-rule-strong: oklch(46% 0.02 60);
+    --color-accent: oklch(70% 0.15 35);
+    --color-accent-ink: oklch(18% 0.02 40);
+    --color-accent-soft: oklch(32% 0.06 35);
+    --color-good: oklch(74% 0.12 150);
+    --color-bad: oklch(72% 0.15 28);
+    --color-focus: oklch(74% 0.13 255);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-paper: oklch(21% 0.012 60);
+  --color-paper-2: oklch(25% 0.014 60);
+  --color-paper-3: oklch(30% 0.016 60);
+  --color-surface: oklch(23.5% 0.012 60);
+  --color-ink: oklch(92% 0.012 85);
+  --color-ink-2: oklch(78% 0.014 85);
+  --color-ink-3: oklch(64% 0.014 85);
+  --color-rule: oklch(34% 0.014 60);
+  --color-rule-strong: oklch(46% 0.02 60);
+  --color-accent: oklch(70% 0.15 35);
+  --color-accent-ink: oklch(18% 0.02 40);
+  --color-accent-soft: oklch(32% 0.06 35);
+  --color-good: oklch(74% 0.12 150);
+  --color-bad: oklch(72% 0.15 28);
+  --color-focus: oklch(74% 0.13 255);
+}

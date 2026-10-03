@@ -1,0 +1,15 @@
+import { boot } from "../test/harness.mjs";
+import { computeChart, dasa } from "../src/engine/core.js";
+import { DEFAULTS } from "../src/engine/settings.js";
+const { swe, db } = await boot();
+const input = { name: "test", gender: "Male", date: process.argv[2] || "2018-01-01", time: process.argv[3] || "14:30", place: { name: "Calicut", lat: 11.25, lon: 75.77, tz: 5.5 } };
+const c = computeChart(swe, db, { ...DEFAULTS, ...(process.argv[4] ? JSON.parse(process.argv[4]) : {}) }, input);
+const fmt = (l) => `${String(Math.trunc(l / 30)).padStart(2, "0")}-${String(Math.trunc(l % 30)).padStart(2, "0")}-${String(Math.trunc((l % 1) * 60)).padStart(2, "0")}`;
+for (const [k, p] of Object.entries(c.planets)) console.log(k.padEnd(8), fmt(p.lon), p.retro ? "R" : "", p.combust ? "C" : "");
+const { malayalam, saka, kali, rasimana, panchabhuta, pancha, ...rest } = c.time;
+console.log("sun", c.sun, "ayan", c.ayanamsa);
+console.log(rest);
+console.log({ malayalam, saka, kali, panchabhuta });
+const ds = dasa(db, c, c.planets.Moon.lon);
+console.log(ds.balance.years, ds.balance.months, ds.balance.days, ds.balance.lord.ml);
+console.log(c.bhava.map((b) => `${b.k}: ${b.start.toFixed(2)} ${b.madhya.toFixed(2)} ${b.end.toFixed(2)} ${b.planets.join(",")}`).join("\n"));

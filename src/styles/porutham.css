@@ -1,0 +1,26 @@
+/* Vivaha porutham + nakshatra porutham tool */
+.pm-band { margin: 0; padding: var(--space-2xs) var(--space-sm); font-size: var(--text-md); color: var(--color-accent); border-bottom: 2px solid var(--color-accent); }
+.pm-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: var(--space-lg); align-items: start; }
+.pm-pair > *, .pm-pair > .card, .pm-tool-grid > .card { margin-top: 0; }
+.pm-pair h3 { margin: 0 0 var(--space-xs); }
+.pm-flags { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.pm-chip { display: inline-block; padding: 2px var(--space-sm); border-radius: 999px; font-size: var(--text-sm); font-weight: 600; border: 1px solid currentColor; }
+.pm-chip.is-good { color: var(--color-good); }
+.pm-chip.is-bad { color: var(--color-bad); }
+.phalam .pm-chip { margin-top: var(--space-xs); }
+.pm-bad { color: var(--color-bad); }
+.pm-kuja + .pm-kuja { border-top: var(--rule-hair); padding-top: var(--space-xs); }
+.pm-kuja p { margin: var(--space-2xs) 0 var(--space-sm); line-height: 1.7; }
+.pm-person h2 { margin: 0 0 var(--space-sm); }
+.pm-load { margin-bottom: var(--space-sm); max-width: 420px; }
+.pm-break { display: none; }
+.pm-print-title { display: none; }
+.pm-tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: var(--space-lg); }
+@media print {
+  .pm-print-title { display: block; }
+  .pm-page-break, .pm-break { break-before: page; }
+  .pm-break { display: block; }
+  .pm-pair { display: block; }
+  .pm-pair > * + *, .pm-pair > .card + .card { margin-top: var(--space-lg); }
+}
+.pm-gloss { margin-top: calc(-1 * var(--space-xs)); font-size: var(--text-sm); }

@@ -1,0 +1,37 @@
+/* Horoscope calculation tabs: shadvarga, ashtakavarga, kalachakra, parashari, varga, KP, print */
+.hc-band { background: var(--color-accent); color: var(--color-accent-ink); font-weight: 700; padding: var(--space-2xs) var(--space-sm); border-radius: var(--radius-sm); margin: 0 0 var(--space-sm); font-size: var(--text-md); }
+table.data tr.tone-bad td { background: color-mix(in oklch, var(--color-bad) 22%, var(--color-surface)); }
+table.data tr.tone-good td { background: color-mix(in oklch, var(--color-good) 22%, var(--color-surface)); }
+table.data tr.tone-mixed td { background: color-mix(in oklch, var(--color-turmeric) 28%, var(--color-surface)); }
+table.data td.c, table.data th.c { text-align: center; }
+table.data tr.block-alt td { background: var(--color-paper-2); }
+table.data td.block-head { font-weight: 700; color: var(--color-ink); }
+table.data td.mb { color: var(--color-accent); font-weight: 700; }
+.legend { font-size: var(--text-sm); color: var(--color-ink-2); line-height: 1.7; }
+.av-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-sm); max-width: 720px; }
+.av-grid .kchart-cell { justify-content: center; align-items: center; align-content: center; font-family: var(--font-num); }
+.av-big { max-width: 420px; }
+.av-big .kchart-cell { justify-content: center; align-content: center; font-family: var(--font-num); font-size: var(--text-lg); }
+.av-grid .kchart-center { padding: var(--space-3xs); font-size: var(--text-xs); }
+.av-grid .kchart-center strong { font-size: var(--text-sm); }
+@media (max-width: 520px) { .av-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.inline-form { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: end; }
+.inline-form .field { min-width: 0; }
+.print-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.print-section + .print-section { margin-top: var(--space-xl); }
+.print-section > h2 { font-size: var(--text-lg); margin: 0 0 var(--space-sm); }
+.ag-print-report { display: none; }
+.ag-print-report .astrologer { margin-top: var(--space-lg); }
+
+@media print {
+  body.ag-printing > *:not(.ag-print-report) { display: none !important; }
+  body.ag-printing .ag-print-report { display: block !important; padding: 0; }
+  .ag-print-report .print-section { break-before: page; page-break-before: always; }
+  .ag-print-report .print-section:first-child { break-before: auto; page-break-before: auto; }
+  .ag-print-report .page-break { break-before: page; page-break-before: always; }
+  .ag-print-report .no-print, .ag-print-report button, .ag-print-report .seg, .ag-print-report .inline-form { display: none !important; }
+  .ag-print-report .kchart, .ag-print-report table { break-inside: avoid; }
+  .ag-print-report .table-wrap { overflow: visible; border: 0; }
+  .ag-print-report .tone-bad td, .ag-print-report .tone-good td, .ag-print-report .tone-mixed td, .ag-print-report .kchart-cell.is-marked { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  @page { size: A4; margin: 12mm; }
+}

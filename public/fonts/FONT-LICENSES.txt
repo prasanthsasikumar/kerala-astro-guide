@@ -1,0 +1,35 @@
+Malayalam fonts bundled with Kerala Astro Guide
+================================================
+
+Each font file carries its copyright notice and licence in its own metadata (OpenType "name"
+table). All of them allow redistribution. Summary:
+
+Meera.ttf         Copyleft 2007-2012 Hussain K H, Suresh P, Swathanthra Malayalam Computing (smc.org.in)
+                  GNU GPL v3 or later, with font exception
+Rachana.ttf       (c) 1999-2014 Rachana Akshara Vedi; Suresh P, Santhosh Thottingal, Rajeesh K Nambiar,
+                  Swathanthra Malayalam Computing. GNU GPL v2 or later, with font exception
+Dyuthi.ttf        (c) 2007 Hiran Venugopalan, Hussain K H, Suresh P, Swathanthra Malayalam Computing
+                  GNU GPL v3 or later, with font exception
+Suruma.ttf        (c) 2007-2009 Suresh P. GNU GPL v3 with font exception
+chilanka.ttf      (c) 2014 Santhosh Thottingal, Kavya Manohar, Swathanthra Malayalam Computing
+                  SIL Open Font License 1.1, Reserved Font Name "Chilanka"
+keraleeyam.ttf    (c) 2014 Hussain K H, Rajeesh K Nambiar, Kavya Manohar, Swathanthra Malayalam Computing
+                  SIL Open Font License 1.1, Reserved Font Name "Keraleeyam"
+Uroob.ttf         (c) 2015 Hussain K H, Kavya Manohar, Rajeesh K Nambiar, Santhosh Thottingal,
+                  Swathanthra Malayalam Computing. SIL Open Font License 1.1, Reserved Font Name "Uroob"
+AnjaliNewLipi.ttf (c) 2004-2007 Kevin & Siji, 2007-2012 Cibu Johny. SIL Open Font License 1.1
+NotoSans.ttf      Noto Sans Malayalam, (c) 2013 Google Inc. SIL Open Font License 1.1
+Deshabhimani.ttf  (c) 2015 Deshabhimani Malayalam Daily. SIL Open Font License 1.1
+Samathwa.ttf      (c) 2015 Appropriate Technology Promotion Society (ATPS). SIL Open Font License 1.1
+Kayyoor.ttf       (c) 2014 Appropriate Technology Promotion Society (ATPS). SIL Open Font License 1.1
+Nellu.ttf         (c) 2014 Appropriate Technology Promotion Society (ATPS). SIL Open Font License 1.1
+Sokanasini.ttf    (c) 2014 chitturcollege.ac.in, Appropriate Technology Promotion Society (ATPS).
+                  SIL Open Font License 1.1
+
+Licence texts:
+  SIL Open Font License 1.1   https://openfontlicense.org/
+  GNU GPL v2                  https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+  GNU GPL v3                  https://www.gnu.org/licenses/gpl-3.0.html
+  GPL font exception          https://www.gnu.org/licenses/gpl-faq.html#FontException
+
+The fonts are unmodified and are not sold by themselves.
