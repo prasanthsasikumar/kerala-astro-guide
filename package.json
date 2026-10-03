@@ -7,7 +7,7 @@
     "build": "vite build",
     "build:public": "VITE_EDITION=public vite build",
     "preview": "vite preview",
-    "test": "node --import ./test/register.mjs --test \"test/**/*.test.mjs\"",
+    "test": "node --preserve-symlinks --preserve-symlinks-main --import ./test/register.mjs --test \"test/*.test.mjs\" \"test/private/*.test.mjs\"",
     "test:public": "VITE_EDITION=public node --import ./test/register.mjs --test \"test/*.test.mjs\"",
     "check-public": "node scripts/check-public.mjs"
   },

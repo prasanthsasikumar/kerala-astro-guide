@@ -7,11 +7,11 @@ dist-*/
 
 # Full edition only (local use, never published): private texts, their extract scripts and
 # tests, the full data export, source artwork, and internal notes.
-src/private/
-test/private/
-public/data/
+src/private
+test/private
+public/data
 public/charticon.png
-assets-src/
+assets-src
 CONTRIBUTING.md
 
 # secrets
