@@ -62,6 +62,8 @@ Environment variables (Vercel project settings, or `.env.local` for `npm run dev
 - `GEMINI_API_KEY` (required)
 - `LIVE_MODEL` (optional, default `gemini-3.8-live`)
 - `LIVE_VOICE` (optional, default `Charon`; any Gemini prebuilt voice)
+- `DAILY_CALL_CAP` (optional, default 100): calls allowed per day for everyone (India time); after
+  that the app says today's free calls are used up. Counted with marker blobs, so it needs the Blob store.
 - `FAMILY_CODE` (optional): when set, calls only work after opening `/#/ask?k=<FAMILY_CODE>`
   once on a device, so strangers cannot spend your quota.
 - `BLOB_READ_WRITE_TOKEN`, `LOG_SECRET`, `ADMIN_KEY` (optional): with a private Vercel Blob store

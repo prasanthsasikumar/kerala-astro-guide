@@ -253,3 +253,13 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; }
 @media (max-width: 420px) { .task .bi-main { font-size: clamp(0.92rem, 4.1vw, 1.05rem); } }
 @media (max-width: 420px) { .task .bi-main { font-size: 0.92rem; } .task { padding: 14px; } }
 .big-choices.three:has(> :nth-child(2):last-child) { grid-template-columns: 1fr 1fr; }
+
+/* support card */
+.support-slot:empty { display: none; }
+.support-card { margin: var(--space-lg) auto 0; max-width: 420px; padding: 20px; border-radius: 20px; background: var(--color-accent-soft); display: flex; flex-direction: column; gap: 12px; text-align: center; }
+.support-title { font-family: var(--font-display); font-size: 1.15rem; }
+.support-card p { margin: 0; font-size: 0.95rem; color: var(--color-ink-2); }
+.support-qr-wrap { display: none; flex-direction: column; align-items: center; gap: 6px; }
+.support-qr { width: 168px; height: 168px; background: white; border-radius: 12px; padding: 6px; }
+.support-qr svg { width: 100%; height: 100%; }
+@media (hover: hover) and (pointer: fine) { .support-qr-wrap { display: flex; } .support-upi { display: none; } }

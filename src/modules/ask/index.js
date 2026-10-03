@@ -13,6 +13,7 @@ import { LiveCall } from "./call.js";
 import { people, initialOf, hrefFor, lastPerson, rememberPerson } from "../../lib/people.js";
 import { bi, biStack } from "../../ui/bi.js";
 import { openSheet } from "../../ui/sheet.js";
+import { supportCard } from "../../ui/support.js";
 import { setNavGuard, clearNavGuard } from "../../lib/nav-guard.js";
 
 // 5 minutes; a shorter limit can be set for testing on the local dev server only (?limit=40)
@@ -107,7 +108,9 @@ async function callScreen(el, input) {
   const editLink = input.id ? h("a", { href: `#/ask?edit=${input.id}` }, tx("വിവരങ്ങൾ മാറ്റുക", "Edit details")) : null;
   const sep = editLink ? h("span", "·") : null;
   const chartBtn = h("button.ask-textbtn", { type: "button", onclick: () => { track("chart_opened", { in_call: !!call }); openChartSheet(chart, ctx, !!call); } }, tx("ഗ്രഹനില കാണുക", "See the chart"));
-  el.append(stage, dock, h("p.ask-under", editLink, sep, chartBtn));
+  const support = h("div.support-slot");
+  el.append(stage, dock, support, h("p.ask-under", editLink, sep, chartBtn));
+  const showSupport = (where) => { if (!support.firstChild) { const c = supportCard(where); if (c) support.append(c); } };
   const myHash = location.hash;
 
   let call = null;
@@ -177,6 +180,7 @@ async function callScreen(el, input) {
   };
   const finish = (reason) => {
     if (!call && !session) return;
+    if (started) showSupport("after_call");
     const dur = started ? Math.round((Date.now() - started) / 1000) : 0;
     if (started) track("call_end", { duration_sec: dur, reason, turns: call?.transcript?.length || 0 });
     saveLog(true);
@@ -196,7 +200,14 @@ async function callScreen(el, input) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ lang: lang(), chart: facts }),
       });
-      if (res.status === 429) throw Object.assign(new Error(tx("ഒരുപാട് കോളുകൾ ആയി. കുറച്ചു കഴിഞ്ഞ് വിളിക്കുക.", "Too many calls. Please try again later.")), { code: "rate_limited" });
+      if (res.status === 429) {
+        const why = (await res.json().catch(() => ({}))).error;
+        if (why === "daily_cap") {
+          showSupport("daily_cap");
+          throw Object.assign(new Error(tx("ഇന്നത്തെ സൗജന്യ കോളുകൾ കഴിഞ്ഞു. നാളെ വീണ്ടും വിളിക്കൂ.", "Today's free calls are used up. Please call again tomorrow.")), { code: "daily_cap" });
+        }
+        throw Object.assign(new Error(tx("ഒരുപാട് കോളുകൾ ആയി. കുറച്ചു കഴിഞ്ഞ് വിളിക്കുക.", "Too many calls. Please try again later.")), { code: "rate_limited" });
+      }
       if (!res.ok) throw Object.assign(new Error(tx("ഇപ്പോൾ ബന്ധിപ്പിക്കാൻ കഴിയുന്നില്ല. കുറച്ചു കഴിഞ്ഞ് ശ്രമിക്കുക.", "Can't connect right now. Please try again shortly.")), { code: "token_" + res.status });
       const { token, model, session: s } = await res.json();
       session = s;

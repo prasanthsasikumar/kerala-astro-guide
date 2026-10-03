@@ -4,6 +4,22 @@
 // POST { code, lang: "ml" | "en", chart: "<facts>" } -> { token, model }
 import { timingSafeEqual } from "node:crypto";
 import { newSession } from "./_lib/session.js";
+import { put, list } from "@vercel/blob";
+
+// Budget guard: at most DAILY_CALL_CAP calls per day for everyone (India time), counted with one
+// tiny private marker blob per call. Not atomic: two calls at the same instant can both get through.
+const DEFAULT_DAILY_CAP = 100;
+const istDay = () => new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
+async function callsToday(token) {
+  let n = 0;
+  let cursor;
+  do {
+    const page = await list({ prefix: `quota/${istDay()}/`, limit: 1000, cursor, token });
+    n += page.blobs.length;
+    cursor = page.hasMore ? page.cursor : undefined;
+  } while (cursor);
+  return n;
+}
 
 const LIMITS = { chart: 12000 };
 const RATE = { windowMs: 60 * 60 * 1000, max: 6 }; // calls per IP per hour, best effort per instance
@@ -63,6 +79,14 @@ export async function handleLiveToken(request, env = process.env) {
   if (rateLimited(ip)) return json(429, { error: "too many calls" });
   const chart = String(body.chart || "");
   if (!chart || chart.length > LIMITS.chart) return json(400, { error: "bad request" });
+  const cap = Number(env.DAILY_CALL_CAP) || DEFAULT_DAILY_CAP;
+  if (env.BLOB_READ_WRITE_TOKEN) {
+    try {
+      if ((await callsToday(env.BLOB_READ_WRITE_TOKEN)) >= cap) return json(429, { error: "daily_cap" });
+    } catch (e) {
+      console.error("quota check", e?.message);
+    }
+  }
 
   const model = "models/" + (env.LIVE_MODEL || "gemini-3.8-live");
   const setup = {
@@ -94,7 +118,11 @@ export async function handleLiveToken(request, env = process.env) {
     console.error("auth_tokens", res.status, JSON.stringify(tok).slice(0, 300));
     return json(502, { error: "unavailable" });
   }
-  return json(200, { token: tok.name, model, session: newSession(env.LOG_SECRET) });
+  const session = newSession(env.LOG_SECRET);
+  if (env.BLOB_READ_WRITE_TOKEN) {
+    await put(`quota/${istDay()}/${session.id}`, "1", { access: "private", addRandomSuffix: false, contentType: "text/plain", token: env.BLOB_READ_WRITE_TOKEN }).catch((e) => console.error("quota mark", e?.message));
+  }
+  return json(200, { token: tok.name, model, session });
 }
 
 export const handle = handleLiveToken;

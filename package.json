@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@vercel/blob": "^2.8.0",
+    "qrcode-generator": "^1.4.4",
     "sweph-wasm": "^2.6.9"
   },
   "private": true,
