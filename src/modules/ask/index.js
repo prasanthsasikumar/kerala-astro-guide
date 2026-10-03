@@ -1,7 +1,8 @@
-// Ask the astrologer: a simple, large-text screen for elders. Pick or enter a person, then chat.
-// The chart is computed here; the AI astrologer (api/astrologer.js) only explains it.
+// Talk to the astrologer: a simple, large-type screen for elders. Pick or enter a person,
+// then have a live voice call with an AI astrologer who has studied that horoscope.
+// The chart is computed here; api/live-token.js turns it into a locked, single-use call token.
 import "../../styles/ask.css";
-import { h, clear } from "../../lib/dom.js";
+import { h } from "../../lib/dom.js";
 import { tx, lang } from "../../lib/i18n.js";
 import { setUI, listCharts, saveChart } from "../../lib/store.js";
 import { getCtx, inputToQuery, queryToInput } from "../../lib/ctx.js";
@@ -9,24 +10,33 @@ import { birthForm } from "../../components/birth-form.js";
 import { chartSummary } from "../../engine/chart-summary.js";
 import { NAK_EN, RASI_ML, RASI_EN } from "../../engine/names.js";
 import { APP_NAME_ML, APP_NAME } from "../../lib/edition.js";
+import { LiveCall } from "./call.js";
 
 const FAMILY_KEY = "ag.family";
-const convKey = (input) => "ag.chat." + [input.name, input.date, input.time, (+input.place.lat).toFixed(3), (+input.place.lon).toFixed(3)].join("|");
-
-function store(key, value) {
+function familyCode(value) {
   try {
-    if (value === undefined) return JSON.parse(localStorage.getItem(key) || "null");
-    localStorage.setItem(key, JSON.stringify(value));
+    if (value !== undefined) localStorage.setItem(FAMILY_KEY, value);
+    return localStorage.getItem(FAMILY_KEY) || "";
   } catch {
-    return null;
+    return value || "";
   }
-  return value;
 }
+
+const ICON = {
+  phone: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg>',
+  micOff: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 11h-2a5 5 0 0 1-.4 1.97l1.5 1.5A6.9 6.9 0 0 0 19 11zm-4 .17V5a3 3 0 0 0-5.94-.6L15 10.35zM4.27 3 3 4.27l6 6V11a3 3 0 0 0 4.5 2.6l1.65 1.65A5 5 0 0 1 7 11H5a7 7 0 0 0 6 6.92V21h2v-3.08a6.9 6.9 0 0 0 3.6-1.5L19.73 21 21 19.73z"/></svg>',
+};
+const icon = (name) => {
+  const s = h("span.ask-icon");
+  s.innerHTML = ICON[name];
+  return s;
+};
 
 export function render(el, params) {
   // family link: remember the code, then drop it from the address bar
   if (params.k) {
-    store(FAMILY_KEY, params.k);
+    familyCode(params.k);
     const rest = { ...params };
     delete rest.k;
     const q = new URLSearchParams(rest).toString();
@@ -35,8 +45,8 @@ export function render(el, params) {
   el.classList.add("ask");
   const input = queryToInput(params);
   el.append(header(input));
-  if (!input) pickPerson(el, params);
-  else chat(el, input);
+  if (!input) pickPerson(el);
+  else callScreen(el, input);
 }
 
 function header(input) {
@@ -52,7 +62,7 @@ function header(input) {
 function pickPerson(el) {
   const people = listCharts();
   el.append(...[
-    h("h1.ask-title", tx("ജ്യോതിഷനോട് ചോദിക്കാം", "Ask the astrologer")),
+    h("h1.ask-title", tx("ജ്യോതിഷനുമായി സംസാരിക്കാം", "Talk to the astrologer")),
     h("p.ask-lead", tx("ആരുടെ ജാതകമാണ് നോക്കേണ്ടത്?", "Whose horoscope shall we look at?")),
     people.length > 0 && h("div.ask-people", people.map((c) =>
       h("a.ask-person", { href: "#/ask?" + inputToQuery(c) },
@@ -60,7 +70,7 @@ function pickPerson(el) {
         h("span", `${c.date.split("-").reverse().join("-")} · ${c.time} · ${(c.place?.name || "").split(",")[0]}`)))),
     h("h2.ask-sub", people.length ? tx("പുതിയ ആൾ", "Someone new") : tx("ജനന വിവരങ്ങൾ", "Birth details")),
     birthForm({}, {
-      submitLabel: tx("ജ്യോതിഷനോട് ചോദിക്കുക", "Ask the astrologer"),
+      submitLabel: tx("തുടരുക", "Continue"),
       onSubmit: (i) => {
         const exists = listCharts().find((c) => c.name === i.name && c.date === i.date && c.time === i.time);
         const saved = exists || saveChart({ ...i, name: i.name || tx("പേരില്ല", "No name"), kind: "birth" });
@@ -71,157 +81,112 @@ function pickPerson(el) {
   ].filter(Boolean));
 }
 
-const SUGGEST = [
-  ["എന്റെ ജാതകം ചുരുക്കി പറയാമോ?", "Can you summarise this horoscope?"],
-  ["ഇപ്പോഴത്തെ ദശാകാലം എങ്ങനെയാണ്?", "How is the current dasa period?"],
-  ["ഈ വർഷം എങ്ങനെ?", "How will this year be?"],
-  ["ജോലിയും സാമ്പത്തികവും", "Career and finances"],
-  ["വിവാഹവും കുടുംബവും", "Marriage and family"],
-  ["ആരോഗ്യം", "Health"],
-  ["എന്തെങ്കിലും പരിഹാരങ്ങൾ വേണോ?", "Are any remedies needed?"],
-];
-
-async function chat(el, input) {
-  const loading = h("p.ask-lead", tx("ജാതകം ഗണിക്കുന്നു…", "Calculating the horoscope…"));
-  el.append(loading);
+async function callScreen(el, input) {
   const ctx = await getCtx();
   const { text: facts, chart } = chartSummary(ctx, input);
-  loading.remove();
   const T = chart.time;
   const nakMl = ctx.db.tblMalayalamNakshatra[T.nakIdx - 1].Name;
-  el.append(h("div.ask-person-card",
-    h("strong", input.name || "—"),
-    h("span", tx(`${nakMl} നക്ഷത്രം · ${RASI_ML[chart.planets.Moon.rasi]} കൂറ് · ${RASI_ML[chart.planets.Lagna.rasi]} ലഗ്നം`,
-      `${NAK_EN[T.nakIdx - 1]} star · Moon in ${RASI_EN[chart.planets.Moon.rasi]} · ${RASI_EN[chart.planets.Lagna.rasi]} lagna`)),
-    h("a", { href: "#/horoscope?" + inputToQuery(input) }, tx("ഗ്രഹനില കാണുക", "See the chart"))));
 
-  const key = convKey(input);
-  let messages = store(key) || [];
-  const log = h("div.ask-log", { "aria-live": "polite" });
-  const chips = h("div.ask-chips", SUGGEST.map(([ml, en]) => h("button.ask-chip", { type: "button", onclick: () => send(tx(ml, en)) }, tx(ml, en))));
-  const box = h("textarea.input.ask-input", { rows: 2, placeholder: tx("ഇവിടെ ചോദ്യം എഴുതുക…", "Type your question…") });
-  const sendBtn = h("button.btn.btn-primary.ask-send", { type: "submit" }, tx("ചോദിക്കുക", "Ask"));
-  const form = h("form.ask-form", { onsubmit: (e) => { e.preventDefault(); send(box.value); } }, box, micButton(box), sendBtn);
-  if (!form.querySelector(".ask-mic")) form.classList.add("no-mic");
-  box.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(box.value); }
-  });
-  el.append(...[log, chips, form,
-    h("p.ask-small", tx("ജ്യോതിഷം ഒരു വഴികാട്ടി മാത്രമാണ്. ആരോഗ്യം, പണം, നിയമം എന്നിവയിൽ വിദഗ്ധരുടെ ഉപദേശം തേടുക.",
-      "Astrology is guidance only. For health, money or legal matters, consult a professional.")),
-    messages.length ? h("p.ask-small", h("button.btn.btn-ghost.btn-sm", { type: "button", onclick: () => { messages = []; store(key, messages); log.replaceChildren(); chips.hidden = false; } }, tx("സംഭാഷണം മായ്ക്കുക", "Clear conversation"))) : null].filter(Boolean));
+  const status = h("p.call-status", { role: "status" }, tx("വിളിക്കാൻ പച്ച ബട്ടൺ അമർത്തുക", "Press the green button to call"));
+  const timer = h("p.call-timer", { hidden: true }, "0:00");
+  const avatar = h("div.call-avatar", h("img", { src: "/logo-mark.png", alt: "" }));
+  const callBtn = h("button.call-btn.call-start", { type: "button", "aria-label": tx("വിളിക്കുക", "Call") }, icon("phone"), h("span", tx("വിളിക്കുക", "Call")));
+  const muteBtn = h("button.call-btn.call-mute", { type: "button", hidden: true, "aria-pressed": "false" }, icon("mic"), h("span", tx("മ്യൂട്ട്", "Mute")));
+  const endBtn = h("button.call-btn.call-end", { type: "button", hidden: true, "aria-label": tx("കോൾ അവസാനിപ്പിക്കുക", "End call") }, icon("phone"), h("span", tx("അവസാനിപ്പിക്കുക", "End")));
+  const stage = h("section.call-stage", { "data-state": "idle" },
+    avatar,
+    h("h2.call-name", tx("ജ്യോതിഷി", "Astrologer")),
+    h("p.call-about", tx(`${input.name || ""} · ${nakMl} നക്ഷത്രം · ${RASI_ML[chart.planets.Moon.rasi]} കൂറ്`,
+      `${input.name || ""} · ${NAK_EN[T.nakIdx - 1]} star · Moon in ${RASI_EN[chart.planets.Moon.rasi]}`)),
+    status, timer,
+    h("div.call-controls", muteBtn, callBtn, endBtn));
+  el.append(stage,
+    h("p.ask-small.call-note", tx("ജ്യോതിഷി സംസാരിക്കുമ്പോൾ ഇടയ്ക്ക് കയറി സംസാരിക്കാം. ജ്യോതിഷം ഒരു വഴികാട്ടി മാത്രമാണ്; ആരോഗ്യം, പണം, നിയമം എന്നിവയിൽ വിദഗ്ധരുടെ ഉപദേശം തേടുക.",
+      "You can interrupt the astrologer at any time. Astrology is guidance only; for health, money or legal matters, consult a professional.")),
+    h("p.ask-small", h("a", { href: "#/horoscope?" + inputToQuery(input) }, tx("ഗ്രഹനില കാണുക", "See the chart"))));
 
-  for (const m of messages) log.append(bubble(m.role, m.text));
-  chips.hidden = messages.length > 0;
-  if (messages.length) log.lastElementChild?.scrollIntoView({ block: "end" });
+  let call = null;
+  let started = 0;
+  let clock = 0;
+  const setStatus = (s) => {
+    stage.dataset.state = s;
+    status.textContent = {
+      connecting: tx("ബന്ധിപ്പിക്കുന്നു…", "Connecting…"),
+      listening: tx("കേൾക്കുന്നു…", "Listening…"),
+      speaking: tx("ജ്യോതിഷി സംസാരിക്കുന്നു", "The astrologer is speaking"),
+      ended: tx("കോൾ അവസാനിച്ചു", "Call ended"),
+      error: tx("കോൾ മുറിഞ്ഞു. വീണ്ടും വിളിക്കാം.", "The call dropped. You can call again."),
+    }[s] || "";
+    const live = s === "connecting" || s === "listening" || s === "speaking";
+    callBtn.hidden = live;
+    endBtn.hidden = !live;
+    muteBtn.hidden = !live || s === "connecting";
+    timer.hidden = !live || s === "connecting";
+    if (!live) {
+      clearInterval(clock);
+      call = null;
+      muteBtn.setAttribute("aria-pressed", "false");
+      muteBtn.replaceChildren(icon("mic"), h("span", tx("മ്യൂട്ട്", "Mute")));
+    }
+  };
 
-  let busy = false;
-  async function send(q) {
-    q = q.trim();
-    if (!q || busy) return;
-    busy = true;
-    sendBtn.disabled = true;
-    sendBtn.dataset.state = "loading";
-    chips.hidden = true;
-    box.value = "";
-    messages.push({ role: "user", text: q });
-    log.append(bubble("user", q));
-    const out = bubble("model", "");
-    out.classList.add("is-thinking");
-    out.querySelector(".ask-text").textContent = tx("ജ്യോതിഷി ആലോചിക്കുന്നു…", "The astrologer is thinking…");
-    log.append(out);
-    out.scrollIntoView({ block: "end", behavior: "smooth" });
-    let answer = "";
+  callBtn.addEventListener("click", async () => {
+    setStatus("connecting");
     try {
-      const res = await fetch("/api/astrologer", {
+      const res = await fetch("/api/live-token", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ code: store(FAMILY_KEY) || "", lang: lang(), chart: facts, messages }),
+        body: JSON.stringify({ code: familyCode(), lang: lang(), chart: facts }),
       });
-      if (res.status === 401) throw new Error(tx("ഈ സൗകര്യം കുടുംബ ലിങ്ക് വഴി തുറന്നാൽ മാത്രമേ പ്രവർത്തിക്കൂ. ലിങ്ക് അയച്ചുതന്ന ആളോട് ചോദിക്കുക.", "This feature only works when opened from the family link. Ask the person who shared it."));
-      if (!res.ok || !res.body) throw new Error((await res.text()) || "Error");
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
-      out.classList.remove("is-thinking");
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        answer += dec.decode(value, { stream: true });
-        setRich(out.querySelector(".ask-text"), answer);
-      }
-      if (!answer.trim()) throw new Error(tx("മറുപടി ലഭിച്ചില്ല. വീണ്ടും ശ്രമിക്കുക.", "No answer came back. Please try again."));
-      messages.push({ role: "model", text: answer });
-      store(key, messages);
-      addSpeak(out, answer);
+      if (res.status === 401) throw new Error(tx("ഈ സൗകര്യം കുടുംബ ലിങ്ക് വഴി തുറന്നാൽ മാത്രമേ പ്രവർത്തിക്കൂ. ലിങ്ക് അയച്ചുതന്ന ആളോട് ചോദിക്കുക.", "This only works when opened from the family link. Ask the person who shared it."));
+      if (res.status === 429) throw new Error(tx("ഒരുപാട് കോളുകൾ ആയി. കുറച്ചു കഴിഞ്ഞ് വിളിക്കുക.", "Too many calls. Please try again later."));
+      if (!res.ok) throw new Error(tx("ഇപ്പോൾ ബന്ധിപ്പിക്കാൻ കഴിയുന്നില്ല. കുറച്ചു കഴിഞ്ഞ് ശ്രമിക്കുക.", "Can't connect right now. Please try again shortly."));
+      const { token, model } = await res.json();
+      call = new LiveCall({
+        token, model,
+        greeting: tx("(ഫോൺ കോൾ ബന്ധിപ്പിച്ചു. ദയവായി അഭിവാദ്യം ചെയ്ത് തുടങ്ങുക.)", "(The phone call has connected. Please greet and begin.)"),
+        onState: (s) => {
+          if (s === "listening" && !started) {
+            started = Date.now();
+            clock = setInterval(() => {
+              const sec = Math.floor((Date.now() - started) / 1000);
+              timer.textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+            }, 500);
+          }
+          if (stage.dataset.state !== "ended") setStatus(s);
+        },
+        onLevel: ({ me, them }) => {
+          stage.style.setProperty("--them", them.toFixed(3));
+          stage.style.setProperty("--me", me.toFixed(3));
+        },
+        onError: (err) => console.warn("call", err),
+      });
+      started = 0;
+      await call.start();
     } catch (err) {
-      messages.pop();
-      out.classList.remove("is-thinking");
-      out.classList.add("is-error");
-      out.querySelector(".ask-text").textContent = err.message || String(err);
-    } finally {
-      busy = false;
-      sendBtn.disabled = false;
-      delete sendBtn.dataset.state;
+      call?.hangup();
+      setStatus("error");
+      const denied = err?.name === "NotAllowedError" || err?.name === "SecurityError";
+      status.textContent = denied
+        ? tx("മൈക്രോഫോൺ അനുവദിക്കണം. ബ്രൗസറിലെ ക്രമീകരണങ്ങളിൽ മൈക്രോഫോൺ അനുമതി നൽകുക.", "Please allow the microphone in your browser settings.")
+        : err.message || String(err);
     }
-  }
-}
-
-function bubble(role, text) {
-  const b = h("div", { class: `ask-msg ask-${role}` }, h("div.ask-text"));
-  if (role === "model") {
-    setRich(b.querySelector(".ask-text"), text);
-    if (text) addSpeak(b, text);
-  } else b.querySelector(".ask-text").textContent = text;
-  return b;
-}
-
-// minimal, safe formatting for model text: paragraphs, bullet lines, **bold**
-function setRich(node, text) {
-  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-  const html = esc(text).split(/\n{2,}/).map((para) => {
-    const lines = para.split("\n");
-    if (lines.every((l) => /^\s*([*-]|\d+\.)\s+/.test(l)))
-      return "<ul>" + lines.map((l) => "<li>" + l.replace(/^\s*([*-]|\d+\.)\s+/, "") + "</li>").join("") + "</ul>";
-    return "<p>" + lines.join("<br>") + "</p>";
-  }).join("").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
-  node.innerHTML = html;
-}
-
-function addSpeak(b, text) {
-  if (!("speechSynthesis" in window) || b.querySelector(".ask-speak")) return;
-  const want = lang() === "en" ? "en" : "ml";
-  const voice = () => speechSynthesis.getVoices().find((v) => v.lang?.toLowerCase().startsWith(want));
-  const btn = h("button.btn.btn-sm.btn-ghost.ask-speak", { type: "button", hidden: true }, tx("🔊 കേൾക്കുക", "🔊 Listen"));
-  btn.addEventListener("click", () => {
-    if (speechSynthesis.speaking) { speechSynthesis.cancel(); return; }
-    const u = new SpeechSynthesisUtterance(text.replace(/[*#]/g, ""));
-    u.voice = voice();
-    u.lang = u.voice?.lang || (want === "ml" ? "ml-IN" : "en-IN");
-    u.rate = 0.95;
-    speechSynthesis.speak(u);
   });
-  const check = () => { btn.hidden = !voice(); };
-  check();
-  speechSynthesis.addEventListener?.("voiceschanged", check);
-  b.append(btn);
-}
-
-function micButton(box) {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) return null;
-  const btn = h("button.btn.ask-mic", { type: "button", "aria-label": tx("സംസാരിക്കുക", "Speak") }, "🎤");
-  let rec = null;
-  btn.addEventListener("click", () => {
-    if (rec) { rec.stop(); return; }
-    rec = new SR();
-    rec.lang = lang() === "en" ? "en-IN" : "ml-IN";
-    rec.interimResults = true;
-    const start = box.value ? box.value.trimEnd() + " " : "";
-    rec.onresult = (e) => { box.value = start + [...e.results].map((r) => r[0].transcript).join(" "); };
-    rec.onend = () => { rec = null; btn.removeAttribute("data-state"); };
-    rec.onerror = () => { rec = null; btn.removeAttribute("data-state"); };
-    btn.dataset.state = "loading";
-    rec.start();
+  endBtn.addEventListener("click", () => {
+    call?.hangup();
+    setStatus("ended");
   });
-  return btn;
+  muteBtn.addEventListener("click", () => {
+    if (!call) return;
+    const m = muteBtn.getAttribute("aria-pressed") !== "true";
+    call.setMuted(m);
+    muteBtn.setAttribute("aria-pressed", String(m));
+    muteBtn.replaceChildren(icon(m ? "micOff" : "mic"), h("span", m ? tx("മ്യൂട്ട് മാറ്റുക", "Unmute") : tx("മ്യൂട്ട്", "Mute")));
+  });
+  // leaving the page ends the call
+  const leave = () => {
+    call?.hangup();
+    window.removeEventListener("hashchange", leave);
+  };
+  window.addEventListener("hashchange", leave);
 }

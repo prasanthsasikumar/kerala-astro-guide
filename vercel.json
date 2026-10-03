@@ -34,8 +34,8 @@
     }
   ],
   "functions": {
-    "api/astrologer.js": {
-      "maxDuration": 60
+    "api/live-token.js": {
+      "maxDuration": 15
     }
   }
 }

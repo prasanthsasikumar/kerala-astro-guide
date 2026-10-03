@@ -27,18 +27,22 @@ Bilingual interface (Malayalam / English), phone-friendly.
 
 This edition shows calculations, tables and charts only. It does not include interpretive texts.
 
-## Ask the astrologer
+## Talk to the astrologer
 
-`#/ask` is a simple, large-text screen for elders: pick or enter a person, then chat with an
-AI astrologer in Malayalam (English optional). The chart is computed in the browser; the
-facts (positions, nakshatra, dasa/apahara dates, today's transits) are sent to a serverless
-function (`api/astrologer.js`) that calls Google Gemini. The API key stays on the server.
+`#/ask` is a simple, large-type screen for elders: pick or enter a person, then press the green
+button for a live voice call with an AI astrologer (Malayalam by default, English optional).
+You can interrupt him at any time, like a phone call. The chart is computed in the browser; the
+facts (positions, nakshatra, dasa/apahara dates, today's transits) go to a serverless function
+(`api/live-token.js`) that builds the whole call setup and locks it into a short-lived,
+single-use Gemini Live token. The browser then streams audio to Gemini directly; the API key
+never leaves the server.
 
 Environment variables (Vercel project settings, or `.env.local` for `npm run dev`):
 
 - `GEMINI_API_KEY` (required)
-- `GEMINI_MODEL` (optional, default `gemini-flash-latest`)
-- `FAMILY_CODE` (optional): when set, the chat only works after opening `/#/ask?k=<FAMILY_CODE>`
+- `LIVE_MODEL` (optional, default `gemini-3.8-live`)
+- `LIVE_VOICE` (optional, default `Charon`; any Gemini prebuilt voice)
+- `FAMILY_CODE` (optional): when set, calls only work after opening `/#/ask?k=<FAMILY_CODE>`
   once on a device, so strangers cannot spend your quota.
 
 ## Development

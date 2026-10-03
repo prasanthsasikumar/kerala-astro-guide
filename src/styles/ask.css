@@ -17,31 +17,36 @@
 .ask-person span { color: var(--color-ink-3); font-size: 1rem; }
 .ask .input { min-height: 48px; font-size: 1.1rem; }
 .ask .field > span { font-size: 1rem; }
-.ask-person-card { display: flex; flex-direction: column; gap: var(--space-2xs); padding: var(--space-md) var(--space-lg); border-radius: var(--radius-md); background: var(--color-accent-soft); margin-bottom: var(--space-lg); }
-.ask-person-card strong { font-family: var(--font-display); font-size: 1.4rem; }
-.ask-person-card a { font-size: 1rem; }
-.ask-log { display: flex; flex-direction: column; gap: var(--space-md); margin-bottom: var(--space-md); }
-.ask-msg { max-width: 92%; padding: var(--space-sm) var(--space-md); border-radius: var(--radius-md); line-height: 1.75; }
-.ask-msg p { margin: 0 0 var(--space-xs); }
-.ask-msg p:last-child, .ask-msg ul:last-child { margin-bottom: 0; }
-.ask-msg ul { margin: 0 0 var(--space-xs); padding-left: 1.2em; }
-.ask-user { align-self: flex-end; background: var(--color-ink); color: var(--color-paper); }
-.ask-model { align-self: flex-start; background: var(--color-surface); border: var(--rule-hair); }
-.ask-model.is-thinking .ask-text { color: var(--color-ink-3); }
-.ask-model.is-error { border-color: var(--color-bad); }
-.ask-speak { margin-top: var(--space-2xs); }
-.ask-chips { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-bottom: var(--space-md); }
-.ask-chip { font: inherit; font-size: 1.05rem; padding: var(--space-xs) var(--space-md); min-height: 44px; border-radius: 999px; border: var(--rule-strong); background: var(--color-surface); color: var(--color-ink); cursor: pointer; }
-.ask-chip:hover { background: var(--color-paper-3); }
-.ask-form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-xs); align-items: end; position: sticky; bottom: 0; background: var(--color-paper); padding: var(--space-sm) 0; }
-.ask-input { resize: vertical; min-height: 56px; }
-.ask-mic, .ask-send { min-height: 56px !important; }
-.ask-mic[data-state="loading"] { background: var(--color-accent); color: var(--color-accent-ink); }
-@media (max-width: 480px) {
-  .ask-form { grid-template-columns: minmax(0, 1fr) auto; }
-  .ask-send { grid-column: 1 / -1; }
-  .ask-msg { max-width: 100%; }
-}
 .ask-brand .brand-logo { width: 36px; height: 36px; }
-.ask-form.no-mic { grid-template-columns: minmax(0, 1fr) auto; }
-@media (max-width: 480px) { .ask-form.no-mic { grid-template-columns: minmax(0, 1fr); } }
+
+/* call screen */
+.call-stage { --them: 0; --me: 0; display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-xs); padding: var(--space-xl) 0 var(--space-lg); }
+.call-avatar { position: relative; width: 168px; height: 168px; border-radius: 50%; display: grid; place-items: center; background: var(--color-surface); border: 2px solid var(--color-rule-strong); margin-bottom: var(--space-md); }
+.call-avatar img { width: 112px; height: 112px; }
+.call-avatar::before, .call-avatar::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; pointer-events: none; }
+.call-avatar::before { border: 3px solid var(--color-accent); opacity: calc(0.15 + var(--them) * 0.85); transform: scale(calc(1 + var(--them) * 0.22)); }
+.call-avatar::after { inset: -2px; border: 2px solid var(--color-good); opacity: calc(var(--me) * 0.9); transform: scale(calc(1 + var(--me) * 0.1)); }
+.call-stage[data-state="idle"] .call-avatar::before, .call-stage[data-state="ended"] .call-avatar::before, .call-stage[data-state="error"] .call-avatar::before { opacity: 0.12; transform: none; }
+.call-stage[data-state="connecting"] .call-avatar::before { animation: call-pulse 1.4s var(--ease-in-out) infinite; }
+@keyframes call-pulse { 0%, 100% { opacity: 0.15; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.12); } }
+.call-name { font-size: 1.8rem; }
+.call-about { color: var(--color-ink-2); font-size: 1.05rem; margin: 0; }
+.call-status { min-height: 1.8em; font-size: 1.2rem; color: var(--color-ink); margin: var(--space-md) 0 0; max-width: 34ch; }
+.call-timer { font-family: var(--font-num); color: var(--color-ink-3); margin: 0; }
+.call-controls { display: flex; gap: var(--space-xl); justify-content: center; align-items: flex-start; margin-top: var(--space-lg); }
+.call-btn { display: flex; flex-direction: column; align-items: center; gap: var(--space-xs); border: 0; background: none; color: var(--color-ink); font: inherit; font-size: 1rem; cursor: pointer; }
+.call-btn .ask-icon { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out); }
+.call-btn .ask-icon svg { width: 38px; height: 38px; }
+.call-btn:active .ask-icon { transform: scale(0.94); }
+.call-btn:focus-visible { outline: none; }
+.call-btn:focus-visible .ask-icon { outline: 3px solid var(--color-focus); outline-offset: 3px; }
+.call-start .ask-icon { background: var(--color-call-green); color: white; }
+.call-end .ask-icon { background: var(--color-call-red); color: white; }
+.call-end .ask-icon svg { transform: rotate(135deg); }
+.call-mute .ask-icon { background: var(--color-paper-3); color: var(--color-ink); width: 72px; height: 72px; margin-top: 6px; }
+.call-mute[aria-pressed="true"] .ask-icon { background: var(--color-ink); color: var(--color-paper); }
+.call-note { text-align: center; max-width: 46ch; margin-left: auto; margin-right: auto; }
+:root { --color-call-green: oklch(62% 0.17 150); --color-call-red: oklch(58% 0.21 27); }
+@media (prefers-reduced-motion: reduce) {
+  .call-avatar::before, .call-avatar::after { transform: none !important; animation: none !important; }
+}

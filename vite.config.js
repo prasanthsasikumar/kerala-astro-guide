@@ -62,16 +62,16 @@ function publicEdition() {
   };
 }
 
-// Dev only: serve the astrologer function (api/astrologer.js) from the Vite server.
+// Dev only: serve the call-token function (api/live-token.js) from the Vite server.
 function askApi(env) {
   return {
     name: "ask-api",
     configureServer(server) {
-      server.middlewares.use("/api/astrologer", async (req, res) => {
-        const { handleAsk } = await server.ssrLoadModule("/api/astrologer.js");
+      server.middlewares.use("/api/live-token", async (req, res) => {
+        const { handleLiveToken: handleAsk } = await server.ssrLoadModule("/api/live-token.js");
         const chunks = [];
         for await (const c of req) chunks.push(c);
-        const request = new Request("http://localhost/api/astrologer", {
+        const request = new Request("http://localhost/api/live-token", {
           method: req.method, headers: req.headers, body: req.method === "POST" ? Buffer.concat(chunks) : undefined,
         });
         const response = await handleAsk(request, { ...process.env, ...env });
