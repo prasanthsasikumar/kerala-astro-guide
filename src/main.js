@@ -56,6 +56,19 @@ function drawChrome(route) {
       h("span.tab-pill"), lang() === "en" ? en : ml)));
 }
 
+// After a new deploy, an open page can ask for code files that no longer exist.
+// Reload once to pick up the new version instead of showing an error.
+function reloadForUpdate() {
+  try {
+    if (sessionStorage.getItem("ag.reloaded") === location.hash) return false;
+    sessionStorage.setItem("ag.reloaded", location.hash);
+  } catch { /* storage off: reload anyway */ }
+  location.reload();
+  return true;
+}
+window.addEventListener("vite:preloadError", (e) => { if (reloadForUpdate()) e.preventDefault(); });
+const isStaleChunk = (err) => /dynamically imported module|Importing a module script failed|error loading dynamically imported/i.test(String(err?.message || err));
+
 let renderSeq = 0;
 async function render() {
   const [path, query] = (location.hash.slice(2) || "home").split("?");
@@ -77,8 +90,10 @@ async function render() {
     if ((route.chrome || "legacy") === "legacy") main.append(h("div.legacy-head", screenHeader({ back: route.back || "#/more" })));
     await mod.render(main, params);
     window.scrollTo(0, 0);
+    try { sessionStorage.removeItem("ag.reloaded"); } catch { /* ignore */ }
   } catch (err) {
     console.error(err);
+    if (isStaleChunk(err) && reloadForUpdate()) return;
     if (my === renderSeq) clear(main).append(h("div.error", String(err.message || err)));
   }
 }
