@@ -71,6 +71,7 @@ function pickPerson(el) {
     h("h2.ask-sub", people.length ? tx("പുതിയ ആൾ", "Someone new") : tx("ജനന വിവരങ്ങൾ", "Birth details")),
     birthForm({}, {
       submitLabel: tx("തുടരുക", "Continue"),
+      emptyPlace: true,
       onSubmit: (i) => {
         const exists = listCharts().find((c) => c.name === i.name && c.date === i.date && c.time === i.time);
         const saved = exists || saveChart({ ...i, name: i.name || tx("പേരില്ല", "No name"), kind: "birth" });

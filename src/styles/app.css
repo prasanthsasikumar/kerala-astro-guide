@@ -187,3 +187,13 @@ select.input { text-overflow: ellipsis; }
 :root[data-theme="dark"] .brand-logo { filter: invert(1) hue-rotate(180deg) brightness(1.4); }
 .field-wide { grid-column: span 2; }
 @media (max-width: 520px) { .field-wide { grid-column: 1 / -1; } }
+
+/* place picker */
+.place-picker { display: flex; flex-direction: column; gap: var(--space-xs); }
+.place-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs); }
+.place-summary { margin: 0; font-size: var(--text-sm); color: var(--color-good); }
+.place-summary.is-empty { color: var(--color-ink-3); }
+.place-details summary { cursor: pointer; font-size: var(--text-sm); color: var(--color-ink-3); padding: var(--space-2xs) 0; }
+.place-details .form-grid { margin-top: var(--space-xs); }
+.combo-list .place-name { font-weight: 700; }
+.combo-list .place-loading { color: var(--color-ink-3); cursor: default; font-size: var(--text-xs); }

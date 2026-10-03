@@ -12,8 +12,8 @@ export function nowParts(tz = 5.5) {
   return { date: iso.slice(0, 10), time: iso.slice(11, 16) };
 }
 
-export function birthForm(initial = {}, { withName = true, withGender = true, submitLabel = t("calculate"), onSubmit, extra } = {}) {
-  const v = { name: "", gender: "Male", ...nowParts(), place: DEFAULT_PLACE, ...initial };
+export function birthForm(initial = {}, { withName = true, withGender = true, submitLabel = t("calculate"), onSubmit, extra, emptyPlace = false } = {}) {
+  const v = { name: "", gender: "Male", ...nowParts(), place: emptyPlace ? null : DEFAULT_PLACE, ...initial };
   const name = h("input.input", { type: "text", value: v.name, autocomplete: "off" });
   const gender = h("select.input",
     h("option", { value: "Male", selected: v.gender === "Male" }, t("male")),
@@ -25,7 +25,10 @@ export function birthForm(initial = {}, { withName = true, withGender = true, su
   const form = h("form.card", {
     onsubmit: (e) => {
       e.preventDefault();
-      if (!date.value || !time.value || !Number.isFinite(place?.lat)) return;
+      if (!date.value || !time.value || !Number.isFinite(place?.lat)) {
+        form.reportValidity();
+        return;
+      }
       // zone-based places: use the UTC offset in force at that date and time
       const p = place.tzName ? { ...place, tz: tzOffsetAt(place.tzName, date.value, time.value) } : place;
       onSubmit({ ...v, name: name.value.trim(), gender: gender.value, date: date.value, time: time.value, place: p });
@@ -36,7 +39,7 @@ export function birthForm(initial = {}, { withName = true, withGender = true, su
       withGender && h("label.field", h("span", t("gender")), gender),
       h("label.field", h("span", t("date")), date),
       h("label.field", h("span", t("time")), time),
-      placePicker(place, (p) => { place = p; })),
+      placePicker(place, (p) => { place = p; }, { required: true })),
     extra,
     h("div.form-actions",
       h("button.btn.btn-primary", { type: "submit" }, submitLabel),
