@@ -18,8 +18,8 @@ const problems = [];
 const TEXT_EXT = /\.(m?js|cjs|json|html|css|md|txt|sh|webmanifest|svg|xml|ya?ml)$|(^|\/)(LICENSE|\.gitignore)$/i;
 
 // provenance markers, assembled so this file does not match itself
-const MARKERS = [["Mee", "val"], ["ja", "dx"], ["decom", "pil"], ["_un", "packed"]].map((p) => p.join(""));
-// the one allowed mention: the independence note
+const MARKERS = [["Mee", "val"], ["ja", "dx"], ["decom", "pil"], ["_un", "packed"], ["9496", "410284"], ["9567", "720102"]].map((p) => p.join(""));
+// no exceptions: the original publisher is never named
 const ALLOWED = {};
 
 // ---------- 1. build ----------
@@ -76,6 +76,7 @@ for (const f of files(dist)) {
   const s = hasSample(text);
   if (s) problems.push(`${rel(f)}: contains text sample "${s}"`);
   if (/["'`(]\/data\/|\bdata\/(astro|yogam|places)\.json/.test(text)) problems.push(`${rel(f)}: references a /data/ path`);
+  for (const m of MARKERS) if (text.toLowerCase().includes(m.toLowerCase())) problems.push(`${rel(f)}: contains "${m}"`);
 }
 
 // ---------- 3. would-be-tracked files ----------
