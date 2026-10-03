@@ -64,6 +64,11 @@ Environment variables (Vercel project settings, or `.env.local` for `npm run dev
 - `LIVE_VOICE` (optional, default `Charon`; any Gemini prebuilt voice)
 - `FAMILY_CODE` (optional): when set, calls only work after opening `/#/ask?k=<FAMILY_CODE>`
   once on a device, so strangers cannot spend your quota.
+- `BLOB_READ_WRITE_TOKEN`, `LOG_SECRET`, `ADMIN_KEY` (optional): with a private Vercel Blob store
+  connected, each call's details and transcript are saved (`api/log.js`, only for sessions signed
+  by `api/live-token.js`) and can be read at `/#/admin` with `ADMIN_KEY`. Users see a consent line
+  and a privacy page (`/#/privacy`). Google Analytics (`src/lib/analytics.js`) gets anonymous
+  events only, never names or birth details.
 
 ## Development
 
