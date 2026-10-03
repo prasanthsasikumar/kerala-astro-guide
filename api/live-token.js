@@ -5,7 +5,8 @@
 import { timingSafeEqual } from "node:crypto";
 
 const LIMITS = { chart: 12000 };
-const RATE = { windowMs: 60 * 60 * 1000, max: 20 }; // calls per IP per hour, best effort per instance
+const RATE = { windowMs: 60 * 60 * 1000, max: 6 }; // calls per IP per hour, best effort per instance
+const CALL_MINUTES = 15; // longest call
 
 const PROMPT = (lang) => `You are on a live VOICE CALL as "ജ്യോതിഷി", a warm, wise, experienced Kerala astrologer in his sixties. You are talking with an elderly Malayali family member about a horoscope that you have already studied.
 
@@ -78,7 +79,7 @@ export async function handleLiveToken(request, env = process.env) {
     headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
     body: JSON.stringify({
       uses: 1,
-      expireTime: new Date(now + 30 * 60e3).toISOString(), // longest possible call
+      expireTime: new Date(now + CALL_MINUTES * 60e3).toISOString(), // longest possible call
       newSessionExpireTime: new Date(now + 2 * 60e3).toISOString(), // must connect within 2 min
       bidiGenerateContentSetup: setup,
       fieldMask: Object.keys(setup).join(","), // lock everything: the browser cannot change persona or voice
