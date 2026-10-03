@@ -263,3 +263,10 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; }
 .support-qr { width: 168px; height: 168px; background: white; border-radius: 12px; padding: 6px; }
 .support-qr svg { width: 100%; height: 100%; }
 @media (hover: hover) and (pointer: fine) { .support-qr-wrap { display: flex; } .support-upi { display: none; } }
+
+/* other Indian scripts: put the script's Noto font first when one is chosen */
+:root { --font-script: ""; --font-script-serif: ""; }
+:root[lang="hi"], :root[lang="ta"], :root[lang="te"], :root[lang="kn"] {
+  --font-body: var(--font-script), "Noto Sans Malayalam", system-ui, sans-serif;
+  --font-display: var(--font-script-serif), var(--font-script), "Noto Serif Malayalam", Georgia, serif;
+}

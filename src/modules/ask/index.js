@@ -3,7 +3,7 @@
 // api/live-token.js turns it into a locked, single-use call token.
 import "../../styles/ask.css";
 import { h } from "../../lib/dom.js";
-import { tx, lang } from "../../lib/i18n.js";
+import { tx, tf, lang } from "../../lib/i18n.js";
 import { getUI, setUI } from "../../lib/store.js";
 import { getCtx, inputToQuery, queryToInput } from "../../lib/ctx.js";
 import { chartSummary } from "../../engine/chart-summary.js";
@@ -79,7 +79,7 @@ async function callScreen(el, input) {
   const stage = h("section.call-stage", { "data-state": "idle" },
     h("div.call-avatar", h("img", { src: "/logo-mark.png", alt: "" })),
     h("h1.call-name", tx("ജ്യോതിഷി", "Astrologer")),
-    h("p.call-about", input.name || "", " · ", tx(`${nakMl} നക്ഷത്രം`, `${NAK_EN[T.nakIdx - 1]} star`),
+    h("p.call-about", input.name || "", " · ", tf("{star} നക്ഷത്രം", "{star} star", { star: lang() === "ml" ? nakMl : NAK_EN[T.nakIdx - 1] }),
       input.timeUnknown ? h("span.call-flag", tx(" · സമയം അറിയില്ല", " · time unknown")) : null),
     status, timer);
   // optional: the caller's number, so a summary can be sent by SMS (kept on this phone too)
@@ -224,7 +224,7 @@ async function callScreen(el, input) {
               const left = Math.max(0, CALL_LIMIT_SEC - sec);
               // the last minute shows the time remaining
               timer.classList.toggle("is-ending", left <= 60);
-              timer.textContent = left <= 60 ? tx(`ബാക്കി ${mmss(left)}`, `${mmss(left)} left`) : mmss(sec);
+              timer.textContent = left <= 60 ? tf("ബാക്കി {t}", "{t} left", { t: mmss(left) }) : mmss(sec);
             }, 500);
             let warned = false;
             limitTimer = setInterval(() => {

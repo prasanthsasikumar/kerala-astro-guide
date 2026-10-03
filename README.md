@@ -5,7 +5,7 @@ A free, open-source web app for Kerala-style (Malayalam) astrology, live at
 Ephemeris compiled to WebAssembly. Data leaves your device only when you search for a place
 (OpenStreetMap) or start a voice call with the astrologer (Google Gemini, see below).
 
-Bilingual interface (Malayalam / English), phone-friendly.
+Malayalam by default, with English, Hindi, Tamil, Telugu and Kannada (simple screens and the voice astrologer; the detailed expert tables are Malayalam/English). Phone-friendly.
 
 ## Features
 

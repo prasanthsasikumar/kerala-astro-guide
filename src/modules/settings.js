@@ -1,6 +1,6 @@
 // Settings (ക്രമീകരണങ്ങൾ) - 21 options. Saved per browser.
 import { h } from "../lib/dom.js";
-import { t, tx } from "../lib/i18n.js";
+import { t, tx, LANGS } from "../lib/i18n.js";
 import { getSettings, setSettings, exportBackup, importBackup, getUI, setUI } from "../lib/store.js";
 import { bi } from "../ui/bi.js";
 import { screenHeader } from "../ui/screen.js";
@@ -78,7 +78,7 @@ export function render(el) {
     h("section.settings-group",
       h("h2", bi("കാഴ്ച", "Display")),
       h("label.setting", h("span.field-label", bi("ഭാഷ", "Language")),
-        seg([["ml", "മലയാളം"], ["en", "English"]], ui.lang || "ml", (v) => setUI({ lang: v }))),
+        h("div.big-choices", LANGS.map((l) => h("button.big-choice", { type: "button", "aria-pressed": String((ui.lang || "ml") === l.code), onclick: () => setUI({ lang: l.code }) }, l.name)))),
       h("label.setting", h("span.field-label", bi("നിറം", "Theme")),
         seg([["auto", tx("സ്വയം", "Auto")], ["light", tx("പകൽ", "Light")], ["dark", tx("രാത്രി", "Dark")]], ui.theme || "auto", (v) => { setUI({ theme: v }); location.reload(); })),
       ...FIELDS.filter((f) => DISPLAY.includes(f[0])).map(select)),

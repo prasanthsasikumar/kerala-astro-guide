@@ -1,7 +1,7 @@
 import "./styles/app.css";
 import "./styles/design.css";
 import { h, clear } from "./lib/dom.js";
-import { t, lang } from "./lib/i18n.js";
+import { t, tx, lang, applyLangFont } from "./lib/i18n.js";
 import { getUI, onChange, initSettings } from "./lib/store.js";
 import { DEFAULTS } from "./engine/settings.js";
 import { APP_NAME, APP_NAME_ML } from "./lib/edition.js";
@@ -32,7 +32,7 @@ const sideFoot = h("div.side-foot");
 const tabbar = h("nav.tabbar", { "aria-label": "Main" });
 const shell = h("div.shell",
   h("aside.sidebar",
-    h("a.brand", { href: "#/" }, h("img.brand-logo", { src: "/logo-mark.png", alt: "", width: 32, height: 32 }), h("span.brand-mark", lang() === "en" ? APP_NAME : APP_NAME_ML)),
+    h("a.brand", { href: "#/" }, h("img.brand-logo", { src: "/logo-mark.png", alt: "", width: 32, height: 32 }), h("span.brand-mark", lang() === "ml" ? APP_NAME_ML : APP_NAME)),
     sideNav, sideFoot),
   main, tabbar);
 app.append(shell);
@@ -53,7 +53,7 @@ function drawChrome(route) {
     h("div.side-lang", langPill()));
   tabbar.replaceChildren(...TABS.map(([p, ml, en]) =>
     h("a.tab", { href: "#/" + (p === "home" ? "" : p), "aria-current": active === p || (p === "people" && active === "person") ? "page" : null },
-      h("span.tab-pill"), lang() === "en" ? en : ml)));
+      h("span.tab-pill"), tx(ml, en))));
 }
 
 // After a new deploy, an open page can ask for code files that no longer exist.
@@ -77,6 +77,7 @@ async function render() {
   shell.dataset.chrome = route.chrome || "legacy";
   drawChrome(route);
   document.documentElement.lang = lang();
+  applyLangFont();
   document.title = route.path === "home" ? `${APP_NAME_ML} · ${APP_NAME}: talk to an astrologer in Malayalam` : `${t(route.label)} · ${APP_NAME}`;
   if (route.path !== "admin") trackScreen(route.path, route.label);
   const my = ++renderSeq;
@@ -114,7 +115,7 @@ onChange((w) => {
   applyTheme();
   if (lang() !== lastLang) {
     lastLang = lang();
-    shell.querySelector(".brand-mark").textContent = lang() === "en" ? APP_NAME : APP_NAME_ML;
+    shell.querySelector(".brand-mark").textContent = lang() === "ml" ? APP_NAME_ML : APP_NAME;
     render();
   }
 });

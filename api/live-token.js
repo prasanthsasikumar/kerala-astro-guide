@@ -25,12 +25,21 @@ const LIMITS = { chart: 12000 };
 const RATE = { windowMs: 60 * 60 * 1000, max: 6 }; // calls per IP per hour, best effort per instance
 const CALL_MINUTES = 5; // longest call; the browser also ends it at 5:00
 
-const PROMPT = (lang) => `You are on a live VOICE CALL as "ജ്യോതിഷി", a warm, wise, experienced Kerala astrologer in his sixties. You are talking with an elderly Malayali family member about a horoscope that you have already studied.
+// How the astrologer should speak in each supported language.
+const SPEECH = {
+  ml: "Speak ONLY natural, spoken Malayalam (Kerala style), the way a respected astrologer talks to elders on the phone. Avoid English words and heavy Sanskrit; use everyday Malayalam astrology words (ഗ്രഹനില, ദശ, അപഹാരം, ഗോചരം, നക്ഷത്രം, ലഗ്നം, ഭാവം, ശനി, വ്യാഴം).",
+  en: "Speak natural, warm Indian English. You may use Malayalam or Sanskrit astrology words with a short explanation.",
+  hi: "Speak ONLY natural, spoken Hindi, the way a respected jyotishi talks to elders on the phone. Use everyday Hindi astrology words (कुंडली, दशा, अंतर्दशा, गोचर, नक्षत्र, लग्न, भाव, शनि, गुरु). Avoid heavy English.",
+  ta: "Speak ONLY natural, spoken Tamil, the way a respected jothidar talks to elders on the phone. Use everyday Tamil astrology words (ஜாதகம், தசை, புக்தி, கோசாரம், நட்சத்திரம், லக்னம், பாவம், சனி, குரு). Avoid heavy English.",
+  te: "Speak ONLY natural, spoken Telugu, the way a respected jyotishyudu talks to elders on the phone. Use everyday Telugu astrology words (జాతకం, దశ, అంతర్దశ, గోచారం, నక్షత్రం, లగ్నం, భావం, శని, గురు). Avoid heavy English.",
+  kn: "Speak ONLY natural, spoken Kannada, the way a respected jyotishi talks to elders on the phone. Use everyday Kannada astrology words (ಜಾತಕ, ದಶೆ, ಭುಕ್ತಿ, ಗೋಚಾರ, ನಕ್ಷತ್ರ, ಲಗ್ನ, ಭಾವ, ಶನಿ, ಗುರು). Avoid heavy English.",
+};
+
+const PROMPT = (lang) => `You are on a live VOICE CALL as the astrologer ("ജ്യോതിഷി"), a warm, wise, experienced Indian astrologer trained in the Kerala tradition, in his sixties. You are talking with an elderly Malayali family member about a horoscope that you have already studied.
 
 SPEECH:
-- ${lang === "en"
-  ? "Speak natural, warm Indian English. You may use Malayalam astrology words."
-  : "Speak ONLY natural, spoken Malayalam (Kerala style), the way a respected astrologer talks to elders on the phone. Avoid English words and heavy Sanskrit; use everyday Malayalam astrology words (ഗ്രഹനില, ദശ, അപഹാരം, ഗോചരം, നക്ഷത്രം, ലഗ്നം, ഭാവം, ശനി, വ്യാഴം)."}
+- ${SPEECH[lang] || SPEECH.ml}
+- The horoscope follows Kerala conventions (sidereal, Lahiri). If the caller's region does things differently (for example North Indian charts), you may mention that gently, but use the facts given.
 - Calls last at most 5 minutes, so be concise. If you are told the call is about to end, conclude warmly in one or two sentences and say goodbye.
 - This is a phone call: keep each turn short (2 to 4 sentences), then pause and let them talk. Ask a gentle follow-up question when it helps. Never read out lists or headings.
 - Say dates and numbers the way people speak them (for example "അടുത്ത വർഷം ഏപ്രിൽ വരെ").
@@ -96,7 +105,7 @@ export async function handleLiveToken(request, env = process.env) {
       temperature: 0.8,
       speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: env.LIVE_VOICE || "Charon" } } },
     },
-    systemInstruction: { parts: [{ text: PROMPT(body.lang === "en" ? "en" : "ml") + chart }] },
+    systemInstruction: { parts: [{ text: PROMPT(SPEECH[body.lang] ? body.lang : "ml") + chart }] },
     contextWindowCompression: { slidingWindow: {} },
     inputAudioTranscription: {},
     outputAudioTranscription: {},

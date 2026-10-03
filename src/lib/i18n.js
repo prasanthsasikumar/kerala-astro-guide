@@ -1,5 +1,6 @@
 // Malayalam / English labels.
 import { getUI } from "./store.js";
+import { DICT } from "./i18n-dict.js";
 import { APP_NAME, APP_NAME_ML } from "./edition.js";
 
 const L = {
@@ -54,14 +55,56 @@ const L = {
   auto: ["സ്വയം", "Auto"],
 };
 
-export const lang = () => getUI().lang || "ml";
+// Malayalam is the default. Other Indian languages translate the simple screens through DICT
+// (keyed by the English text); anything without a translation falls back to English.
+export const LANGS = [
+  { code: "ml", name: "മലയാളം", en: "Malayalam" },
+  { code: "en", name: "English", en: "English" },
+  { code: "hi", name: "हिन्दी", en: "Hindi", script: "Devanagari" },
+  { code: "ta", name: "தமிழ்", en: "Tamil", script: "Tamil" },
+  { code: "te", name: "తెలుగు", en: "Telugu", script: "Telugu" },
+  { code: "kn", name: "ಕನ್ನಡ", en: "Kannada", script: "Kannada" },
+];
+export const lang = () => (LANGS.some((l) => l.code === getUI().lang) ? getUI().lang : "ml");
 export function t(key) {
   const v = L[key];
   if (!v) return key;
-  return lang() === "en" ? v[1] : v[0];
+  return tx(v[0], v[1]);
 }
-// Pick between a Malayalam and an English string inline.
-export const tx = (ml, en) => (lang() === "en" && en ? en : ml);
+// BCP 47 locale for dates and numbers in the current language
+export const locale = () => ({ ml: "ml-IN", en: "en-GB", hi: "hi-IN", ta: "ta-IN", te: "te-IN", kn: "kn-IN" })[lang()];
+
+// Pick the string for the current language: Malayalam, English, or a translation of the English.
+export function tx(ml, en) {
+  const l = lang();
+  if (l === "ml" || en == null) return ml;
+  if (l === "en") return en;
+  return DICT[l]?.[en] ?? en;
+}
+// Same, for strings with variables: tf("{name} ജനിച്ചത് എവിടെ?", "Where was {name} born?", { name })
+export function tf(ml, en, vars = {}) {
+  return tx(ml, en).replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ""));
+}
+
+// Load Noto fonts for the chosen script (only when a non-Malayalam Indian language is picked).
+export function applyLangFont() {
+  const L2 = LANGS.find((l) => l.code === lang());
+  const root = document.documentElement;
+  if (!L2?.script) {
+    root.style.removeProperty("--font-script");
+    return;
+  }
+  const id = "font-" + L2.script;
+  if (!document.getElementById(id)) {
+    const fam = L2.script.replace(/ /g, "+");
+    document.head.append(Object.assign(document.createElement("link"), {
+      id, rel: "stylesheet",
+      href: `https://fonts.googleapis.com/css2?family=Noto+Sans+${fam}:wght@400;600&family=Noto+Serif+${fam}:wght@700&display=swap`,
+    }));
+  }
+  root.style.setProperty("--font-script", `"Noto Sans ${L2.script}"`);
+  root.style.setProperty("--font-script-serif", `"Noto Serif ${L2.script}"`);
+}
 export function addLabels(obj) {
   Object.assign(L, obj);
 }

@@ -7,7 +7,7 @@ import { tzOffsetAt } from "../lib/edition.js";
 import { placePicker } from "../components/place-picker.js";
 import { track } from "../lib/analytics.js";
 import { hrefFor, rememberPerson } from "../lib/people.js";
-import { bi } from "../ui/bi.js";
+import { bi, orderf } from "../ui/bi.js";
 
 export function render(el, params) {
   const target = params.for === "ask" ? "ask" : "horoscope";
@@ -19,8 +19,8 @@ export function render(el, params) {
   const root = h("div.person-form");
   el.append(root);
 
-  const both = (ml, en) => (lang() === "en" ? `${en} · ${ml}` : `${ml} · ${en}`);
-  const nm = () => v.name.trim() || tx("ഇവർ", "they");
+  const both = (ml, en) => orderf(ml, en).filter(Boolean).join(" · ");
+  const nm = () => v.name.trim() || tx("ഇവർ", "this person");
   const draw = () => {
     clear(root);
     const err = h("p.form-error", { role: "alert", hidden: true });
@@ -43,13 +43,13 @@ export function render(el, params) {
       date.addEventListener("change", () => { v.date = date.value; });
       time.addEventListener("change", () => { v.time = time.value; });
       unknown.addEventListener("change", () => { v.timeUnknown = unknown.checked; time.disabled = unknown.checked; if (unknown.checked) { time.value = ""; v.time = ""; } });
-      body = [question(`${nm()} ജനിച്ചത് എപ്പോൾ?`, `When was ${nm()} born?`),
+      body = [question("{name} ജനിച്ചത് എപ്പോൾ?", "When was {name} born?", { name: nm() }),
         h("div.form-stack", h("span.field-label", bi("തീയതി", "Date")), date, h("span.field-label", bi("സമയം", "Time")), time,
           h("label.check-row", unknown, bi("സമയം കൃത്യമായി അറിയില്ല", "Exact time not known")))];
       check = () => (!v.date ? fail("ജനന തീയതി നൽകുക", "Enter the date of birth")
         : !v.timeUnknown && !v.time ? fail("ജനന സമയം നൽകുക, അല്ലെങ്കിൽ 'സമയം അറിയില്ല' തിരഞ്ഞെടുക്കുക", "Enter the time, or tick 'Exact time not known'") : true);
     } else {
-      body = [question(`${nm()} ജനിച്ചത് എവിടെ?`, `Where was ${nm()} born?`),
+      body = [question("{name} ജനിച്ചത് എവിടെ?", "Where was {name} born?", { name: nm() }),
         h("div.form-stack.where", placePicker(v.place, (p) => { v.place = p; })),
         h("p.note", tx("അക്ഷാംശം, രേഖാംശം, സമയമേഖല എന്നിവ തനിയെ ചേരും.", "Latitude, longitude and time zone fill in automatically."))];
       check = () => (Number.isFinite(v.place?.lat) ? true : fail("ജനിച്ച സ്ഥലം ലിസ്റ്റിൽ നിന്ന് തിരഞ്ഞെടുക്കുക", "Pick the birth place from the list"));
@@ -77,9 +77,10 @@ export function render(el, params) {
     ].filter(Boolean));
   };
 
-  function question(ml, en) {
-    const [a, b] = lang() === "en" ? [en, ml] : [ml, en];
-    return h("div.q", h("h1", a), h("p", b));
+  // main question in the chosen language, English (or Malayalam, in English mode) underneath
+  function question(ml, en, vars) {
+    const [a, b] = orderf(ml, en, vars);
+    return h("div.q", h("h1", a), b ? h("p", b) : null);
   }
   function finish() {
     const t = v.timeUnknown ? "12:00" : v.time;

@@ -2,7 +2,7 @@
 // the Expert toggle (remembered) reveals every tab as pill filters.
 import "../../styles/ask.css";
 import { h, clear } from "../../lib/dom.js";
-import { t, tx, lang } from "../../lib/i18n.js";
+import { t, tx, tf, lang, locale } from "../../lib/i18n.js";
 import { listCharts, saveChart, getUI, setUI } from "../../lib/store.js";
 import { getCtx, queryToInput } from "../../lib/ctx.js";
 import { computeChart, dasa, subPeriods } from "../../engine/core.js";
@@ -17,7 +17,7 @@ import { openSheet } from "../../ui/sheet.js";
 import { TABS } from "./tabs.js";
 
 const DASA_EN = { Kethu: "Ketu", Ven: "Venus", Sun: "Sun", Moo: "Moon", Mar: "Mars", Rahu: "Rahu", Jup: "Jupiter", Sat: "Saturn", Mer: "Mercury" };
-const fmtLong = (n) => new Date(n * 864e5).toLocaleDateString(lang() === "en" ? "en-GB" : "ml-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+const fmtLong = (n) => new Date(n * 864e5).toLocaleDateString(locale(), { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 
 export async function render(el, params) {
   const input = queryToInput(params) || (params.id && listCharts().find((c) => c.id === params.id));
@@ -34,7 +34,7 @@ export async function render(el, params) {
   const ctx = await getCtx();
   const chart = computeChart(ctx.swe, ctx.db, ctx.settings, input);
   const [y, m, d] = input.date.split("-").map(Number);
-  const when = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(lang() === "en" ? "en-GB" : "ml-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+  const when = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(locale(), { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
   const sub = [when, input.timeUnknown ? tx("സമയം അറിയില്ല", "time unknown") : clock12(input.time), (input.place?.name || "").split(",")[0]].join(" · ");
   const editHref = input.id ? `#/person?for=horoscope&edit=${input.id}` : null;
 
@@ -78,16 +78,18 @@ function simpleView(chart, ctx, input, openTab) {
   const { db } = ctx;
   const T = chart.time;
   const P = chart.planets;
-  const nk = db.tblMalayalamNakshatra[T.nakIdx - 1].Name;
+  const ML = lang() === "ml";
+  const nk = ML ? db.tblMalayalamNakshatra[T.nakIdx - 1].Name : NAK_EN[T.nakIdx - 1];
+  const sign = (i) => (ML ? RASI_ML[i] : RASI_EN[i]);
   const tithi = db.tblThidhi[T.tithi - 1];
   const fact = (ml, en, value, gloss) => h("div.fact", h("span.fact-label", bi(ml, en)), h("strong.fact-value", value), h("span.fact-gloss", gloss));
   const facts = h("div.facts",
-    fact("നക്ഷത്രം", "Star", nk, `${NAK_EN[T.nakIdx - 1]}, pada ${T.pada}`),
-    fact("കൂറ്", "Moon sign", RASI_ML[P.Moon.rasi], RASI_EN[P.Moon.rasi]),
+    fact("നക്ഷത്രം", "Star", nk, ML ? `${NAK_EN[T.nakIdx - 1]}, pada ${T.pada}` : `pada ${T.pada}`),
+    fact("കൂറ്", "Moon sign", sign(P.Moon.rasi), ML ? RASI_EN[P.Moon.rasi] : ""),
     input.timeUnknown
       ? fact("ലഗ്നം", "Ascendant", "—", tx("സമയം അറിയാതെ കണക്കാക്കാനാവില്ല", "Needs the birth time"))
-      : fact("ലഗ്നം", "Ascendant", RASI_ML[P.Lagna.rasi], RASI_EN[P.Lagna.rasi]),
-    fact("തിഥി", "Lunar day", tithi.Malayalam, tithi.Thidhi));
+      : fact("ലഗ്നം", "Ascendant", sign(P.Lagna.rasi), ML ? RASI_EN[P.Lagna.rasi] : ""),
+    fact("തിഥി", "Lunar day", ML ? tithi.Malayalam : tithi.Thidhi, ML ? tithi.Thidhi : ""));
 
   // current dasa and sub-period
   const ds = dasa(db, chart, P.Moon.lon);
@@ -100,13 +102,13 @@ function simpleView(chart, ctx, input, openTab) {
     const pct = Math.round(((today - sp.start) / (sp.end - sp.start)) * 100);
     dasaCard = h("div.dasa-card",
       h("span.fact-label", bi("ഇപ്പോഴത്തെ ദശ", "Current period")),
-      h("strong.fact-value", `${cur.dasa.ml} · ${sp.dasa.full}`),
-      h("span.fact-gloss", tx(`${fmtLong(sp.end)} വരെ`, `${DASA_EN[cur.dasa.lord]} dasa, ${DASA_EN[sp.dasa.lord]} sub-period · until ${fmtLong(sp.end)}`)),
+      h("strong.fact-value", ML ? `${cur.dasa.ml} · ${sp.dasa.full}` : `${DASA_EN[cur.dasa.lord]} · ${DASA_EN[sp.dasa.lord]}`),
+      h("span.fact-gloss", tf("{date} വരെ", "{dasa} dasa, {sub} sub-period · until {date}", { date: fmtLong(sp.end), dasa: DASA_EN[cur.dasa.lord], sub: DASA_EN[sp.dasa.lord] })),
       h("span.progress", { role: "progressbar", "aria-valuenow": pct, "aria-valuemin": 0, "aria-valuemax": 100 }, h("span", { style: { width: pct + "%" } })));
   }
 
   const rasiCells = cellsBy(chart, (k) => P[k].rasi);
-  const center = h("span", bi("ലഗ്നം", "Lagna"), h("br"), h("strong", input.timeUnknown ? "—" : RASI_ML[P.Lagna.rasi]));
+  const center = h("span", bi("ലഗ്നം", "Lagna"), h("br"), h("strong", input.timeUnknown ? "—" : sign(P.Lagna.rasi)));
   const rasi = chartBox(rasiCells, tx("രാശി", "Rasi"), { mark: input.timeUnknown ? new Set() : new Set([P.Lagna.rasi]), center, size: 520 });
   const enlarge = () => openSheet(tx("രാശിചക്രം", "Rasi chart"), h("div.stack",
     chartBox(rasiCells, tx("രാശി", "Rasi"), { mark: new Set([P.Lagna.rasi]), center: h("strong", tx("രാശി", "Rasi")), size: 600 }),
@@ -114,7 +116,7 @@ function simpleView(chart, ctx, input, openTab) {
 
   const go = (tab) => () => openTab(tab);
   const sections = [
-    ["ജ്യോതിഷിയോട് ചോദിക്കാം", `Talk to the astrologer about ${input.name || "this chart"}`, null, hrefFor(input, "ask")],
+    ["ജ്യോതിഷിയോട് ചോദിക്കാം", "Talk to the astrologer about {name}", null, hrefFor(input, "ask")],
     ["എല്ലാ ചക്രങ്ങളും", "All charts · Navamsa, Bhava, Shadvarga", "charts"],
     ["ദശാകാലങ്ങൾ", "Dasa periods · full timeline", "dasa"],
     ["ഗ്രഹസ്ഫുടങ്ങൾ", "Planet positions · degrees & stars", "sphutas"],
@@ -127,7 +129,7 @@ function simpleView(chart, ctx, input, openTab) {
       h("div.section-head", h("h2", bi("രാശിചക്രം", "Rasi chart")), h("button.ask-textbtn", { type: "button", onclick: enlarge }, bi("വലുതാക്കുക", "Enlarge"))),
       h("button.chart-tap", { type: "button", onclick: enlarge, "aria-label": tx("വലുതാക്കുക", "Enlarge") }, rasi)),
     h("div.rows.mt-lg", sections.map(([ml, en, tab, href]) =>
-      href ? h("a.row", { href }, biStack(ml, en), h("span.chev", "›"))
+      href ? h("a.row", { href }, biStack(ml, en, { vars: { name: input.name || "" } }), h("span.chev", "›"))
         : h("button.row", { type: "button", onclick: go(tab) }, biStack(ml, en), h("span.chev", "›")))));
 }
 

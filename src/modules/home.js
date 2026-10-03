@@ -4,7 +4,8 @@ import { tx, lang } from "../lib/i18n.js";
 import { getCtx } from "../lib/ctx.js";
 import { APP_NAME, APP_NAME_ML } from "../lib/edition.js";
 import { people, initialOf, hrefFor, starOf, lastPerson } from "../lib/people.js";
-import { bi, biStack } from "../ui/bi.js";
+import { bi, biStack, order } from "../ui/bi.js";
+import { NAK_EN } from "../engine/names.js";
 import { langPill } from "../ui/screen.js";
 
 export function render(el) {
@@ -27,24 +28,32 @@ export function render(el) {
     getCtx().then((ctx) => {
       chips.replaceChildren(...list.map((p) => {
         const s = starOf(ctx, p);
-        return chip(p, s ? ctx.db.tblMalayalamNakshatra[s - 1].Name : "");
+        return chip(p, s ? (lang() === "ml" ? ctx.db.tblMalayalamNakshatra[s - 1].Name : NAK_EN[s - 1]) : "");
       }), chips.lastElementChild);
     });
   }
 
   el.append(
     h("header.screen-head.home-head",
-      h("div.brand.home-brand", h("img.brand-logo", { src: "/logo-mark.png", alt: "" }), h("span.brand-mark", lang() === "en" ? APP_NAME : APP_NAME_ML)),
+      h("div.brand.home-brand", h("img.brand-logo", { src: "/logo-mark.png", alt: "" }), h("span.brand-mark", lang() === "ml" ? APP_NAME_ML : APP_NAME)),
       langPill()),
     h("div.home-greet",
-      h("h1.display", "നമസ്കാരം"),
+      h("h1.display", tx("നമസ്കാരം", "Namaskaram")),
       h("p.lead", tx("ഇന്ന് എന്താണ് നോക്കേണ്ടത്?", "What would you like to see today?"))),
     h("div.tasks", tasks.map(([mark, ml, en, href], i) =>
-      h("a.task", { href, class: i === 0 ? "is-first" : "" }, h("span.task-mark", mark), biStack(ml, en)))),
+      h("a.task", { href, class: i === 0 ? "is-first" : "" }, h("span.task-mark", markFor(mark, ml, en)), biStack(ml, en)))),
     h("section.home-people",
       h("div.section-head", h("h2", bi("ആളുകൾ", "People")), h("a", { href: "#/people" }, bi("എല്ലാം", "All"))),
       chips),
     h("a.row.home-more", { href: "#/more" },
       biStack("കൂടുതൽ ഉപകരണങ്ങൾ", "More tools · Prashnam, Transits, Date converter, Star match"),
       h("span.chev", "›")));
+}
+
+// task-card letter mark: the Malayalam mark, or the first letter of the label in the chosen language
+function markFor(mark, ml, en) {
+  if (lang() === "ml") return mark;
+  const label = order(ml, en)[0] || en;
+  const seg = typeof Intl.Segmenter === "function" ? [...new Intl.Segmenter(lang(), { granularity: "grapheme" }).segment(label)].map((x) => x.segment) : [...label];
+  return (seg[0] || "").toUpperCase();
 }
