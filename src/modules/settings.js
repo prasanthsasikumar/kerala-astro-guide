@@ -1,7 +1,9 @@
 // Settings (ക്രമീകരണങ്ങൾ) - 21 options. Saved per browser.
 import { h } from "../lib/dom.js";
 import { t, tx } from "../lib/i18n.js";
-import { getSettings, setSettings, exportBackup, importBackup } from "../lib/store.js";
+import { getSettings, setSettings, exportBackup, importBackup, getUI, setUI } from "../lib/store.js";
+import { bi } from "../ui/bi.js";
+import { screenHeader } from "../ui/screen.js";
 import * as S from "../engine/settings.js";
 
 const opt = (list) => list.map((o) => ({ v: o.v, label: o.en ? tx(o.label, o.en) : o.label }));
@@ -46,9 +48,10 @@ export function applyTypography(s = getSettings()) {
 
 export function render(el) {
   const s = getSettings();
-  const status = h("p.muted", { role: "status" });
-  const form = h("div.card", h("div.form-grid", FIELDS.map(([key, ml, en, options]) => {
-    const sel = h("select.input", {
+  const status = h("p.note", { role: "status" });
+  const DISPLAY = ["font", "fontSize"];
+  const select = ([key, ml, en, options]) => {
+    const sel = h("select.big-input.select", {
       onchange: () => {
         const o = options[sel.selectedIndex];
         setSettings({ [key]: o.v });
@@ -56,9 +59,11 @@ export function render(el) {
         status.textContent = tx("സൂക്ഷിച്ചു", "Saved");
       },
     }, options.map((o) => h("option", { selected: o.v === s[key] }, o.label)));
-    return h("label.field", { style: { gridColumn: "1 / -1" } }, h("span", tx(ml, en)), sel);
-  })));
-
+    return h("label.setting", h("span.field-label", bi(ml, en)), sel);
+  };
+  const ui = getUI();
+  const seg = (items, cur, onPick) => h("div.big-choices.three", items.map(([v, label]) =>
+    h("button.big-choice", { type: "button", "aria-pressed": String(cur === v), onclick: () => onPick(v) }, label)));
   const file = h("input", { type: "file", accept: "application/json", hidden: true, onchange: async () => {
     try {
       importBackup(await file.files[0].text());
@@ -68,19 +73,32 @@ export function render(el) {
     }
   } });
   el.append(
-    h("div.page-head", h("h1", t("settings"))),
-    form,
-    h("div.form-actions",
-      h("button.btn", { type: "button", onclick: () => {
+    screenHeader({ back: "#/" }),
+    h("h1.title", bi("ക്രമീകരണം", "Settings")),
+    h("section.settings-group",
+      h("h2", bi("കാഴ്ച", "Display")),
+      h("label.setting", h("span.field-label", bi("ഭാഷ", "Language")),
+        seg([["ml", "മലയാളം"], ["en", "English"]], ui.lang || "ml", (v) => setUI({ lang: v }))),
+      h("label.setting", h("span.field-label", bi("നിറം", "Theme")),
+        seg([["auto", tx("സ്വയം", "Auto")], ["light", tx("പകൽ", "Light")], ["dark", tx("രാത്രി", "Dark")]], ui.theme || "auto", (v) => { setUI({ theme: v }); location.reload(); })),
+      ...FIELDS.filter((f) => DISPLAY.includes(f[0])).map(select)),
+    h("details.settings-group",
+      h("summary", h("h2", bi("ഗണനം", "Calculation")), h("span.bi-gloss", tx("അയനാംശം, രാഹു, ഭാവം…", "Ayanamsa, nodes, houses…"))),
+      ...FIELDS.filter((f) => !DISPLAY.includes(f[0])).map(select),
+      h("button.btn-secondary-xl", { type: "button", onclick: () => {
         if (!confirm(tx("സ്ഥിരസ്ഥിതി ക്രമീകരണങ്ങളിലേക്ക് മാറ്റട്ടെ?", "Restore default settings?"))) return;
         setSettings({ ...S.DEFAULTS });
         location.reload();
-      } }, tx("സ്ഥിരസ്ഥിതി", "Restore defaults")),
-      h("button.btn", { type: "button", onclick: () => {
-        const a = h("a", { href: URL.createObjectURL(new Blob([exportBackup()], { type: "application/json" })), download: `astro-guide-backup-${new Date().toISOString().slice(0, 10)}.json` });
-        a.click();
-        URL.revokeObjectURL(a.href);
-      } }, t("backup")),
-      h("button.btn", { type: "button", onclick: () => file.click() }, t("restore")), file),
+      } }, bi("സ്ഥിരസ്ഥിതി", "Restore defaults"))),
+    h("section.settings-group",
+      h("h2", bi("വിവരങ്ങൾ", "Data")),
+      h("div.form-stack",
+        h("button.btn-secondary-xl", { type: "button", onclick: () => {
+          const a = h("a", { href: URL.createObjectURL(new Blob([exportBackup()], { type: "application/json" })), download: `astro-guide-backup-${new Date().toISOString().slice(0, 10)}.json` });
+          a.click();
+          URL.revokeObjectURL(a.href);
+        } }, bi("ബാക്കപ്പ്", "Backup")),
+        h("button.btn-secondary-xl", { type: "button", onclick: () => file.click() }, bi("പുനഃസ്ഥാപിക്കുക", "Restore")), file),
+      h("p.note", h("a", { href: "#/privacy" }, bi("സ്വകാര്യത", "Privacy")), " · ", h("a", { href: "#/about" }, bi("ഇതിനെക്കുറിച്ച്", "About")))),
     status);
 }

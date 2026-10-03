@@ -1,96 +1,93 @@
 import "./styles/app.css";
+import "./styles/design.css";
 import { h, clear } from "./lib/dom.js";
 import { t, lang } from "./lib/i18n.js";
-import { getUI, setUI, onChange, initSettings } from "./lib/store.js";
+import { getUI, onChange, initSettings } from "./lib/store.js";
 import { DEFAULTS } from "./engine/settings.js";
 import { APP_NAME, APP_NAME_ML } from "./lib/edition.js";
 import { trackScreen } from "./lib/analytics.js";
 import { canLeave } from "./lib/nav-guard.js";
+import { biStack } from "./ui/bi.js";
+import { screenHeader, langPill } from "./ui/screen.js";
 
 initSettings(DEFAULTS);
 import("./modules/settings.js").then((m) => m.applyTypography());
-import { routes, navGroups } from "./routes.js";
+import { routes } from "./routes.js";
+
+// Shell: desktop = 240px sidebar; phone = per-screen header + 3-item tab bar (Home · People · Settings).
+const SIDE = [
+  ["home", "ഹോം", "Home"],
+  ["horoscope", "ജാതകം", "Horoscope"],
+  ["porutham", "വിവാഹപൊരുത്തം", "Marriage match"],
+  ["divasa-panchangam", "ഇന്ന്", "Today's panchangam"],
+  ["ask", "ജ്യോതിഷിയോട് ചോദിക്കാം", "Talk to astrologer"],
+  ["more", "കൂടുതൽ", "More tools"],
+];
+const TABS = [["home", "ഹോം", "Home"], ["people", "ആളുകൾ", "People"], ["settings", "ക്രമീകരണം", "Settings"]];
 
 const app = document.getElementById("app");
 const main = h("main.main", { id: "main" });
-const nav = h("nav.nav", { "aria-label": "Main" });
+const sideNav = h("nav.side-nav", { "aria-label": "Main" });
+const sideFoot = h("div.side-foot");
+const tabbar = h("nav.tabbar", { "aria-label": "Main" });
 const shell = h("div.shell",
   h("aside.sidebar",
-    h("div.brand", h("img.brand-logo", { src: "/logo-mark.png", alt: "", width: 28, height: 28 }), h("span.brand-mark", APP_NAME_ML)),
-    nav,
-    h("div.sidebar-foot", langToggle(), themeToggle())),
-  h("div",
-    h("header.topbar",
-      h("button.btn.btn-ghost", { "aria-label": "Menu", onclick: () => shell.toggleAttribute("data-nav-open") }, "☰"),
-      h("span.brand-mark", APP_NAME_ML)),
-    main));
+    h("a.brand", { href: "#/" }, h("img.brand-logo", { src: "/logo-mark.png", alt: "", width: 32, height: 32 }), h("span.brand-mark", lang() === "en" ? APP_NAME : APP_NAME_ML)),
+    sideNav, sideFoot),
+  main, tabbar);
 app.append(shell);
-shell.addEventListener("click", (e) => {
-  if (shell.hasAttribute("data-nav-open") && !e.target.closest(".sidebar") && !e.target.closest(".topbar")) shell.removeAttribute("data-nav-open");
-});
-
-function langToggle() {
-  const seg = h("div.seg", { role: "group", "aria-label": "Language" });
-  const draw = () => seg.replaceChildren(
-    ...[["ml", "മല"], ["en", "EN"]].map(([k, label]) =>
-      h("button", { type: "button", "aria-pressed": String(lang() === k), onclick: () => setUI({ lang: k }) }, label)));
-  draw();
-  onChange((w) => w === "ui" && draw());
-  return seg;
-}
 
 function applyTheme() {
   const th = getUI().theme;
   if (th === "light" || th === "dark") document.documentElement.dataset.theme = th;
   else delete document.documentElement.dataset.theme;
 }
-function themeToggle() {
-  const order = ["auto", "light", "dark"];
-  const btn = h("button.btn.btn-sm", { type: "button" });
-  const draw = () => { btn.textContent = t(getUI().theme || "auto"); };
-  btn.addEventListener("click", () => setUI({ theme: order[(order.indexOf(getUI().theme || "auto") + 1) % 3] }));
-  draw();
-  onChange((w) => w === "ui" && (draw(), applyTheme()));
-  applyTheme();
-  return btn;
-}
+applyTheme();
 
-function drawNav(current) {
-  nav.replaceChildren(...navGroups().flatMap((g) => [
-    ...(g.label ? [h("div.nav-group", g.label)] : []),
-    ...g.items.map((r) => h("a", { href: "#/" + r.path, "aria-current": current === r.path ? "page" : null }, t(r.label))),
-  ]));
+function drawChrome(route) {
+  const active = route.nav || route.path;
+  sideNav.replaceChildren(...SIDE.map(([p, ml, en]) =>
+    h("a.side-item", { href: "#/" + (p === "home" ? "" : p), "aria-current": active === p ? "page" : null }, biStack(ml, en))));
+  sideFoot.replaceChildren(
+    h("a.side-item", { href: "#/settings", "aria-current": active === "settings" ? "page" : null }, biStack("ക്രമീകരണം", "Settings · Ayanamsa, fonts")),
+    h("div.side-lang", langPill()));
+  tabbar.replaceChildren(...TABS.map(([p, ml, en]) =>
+    h("a.tab", { href: "#/" + (p === "home" ? "" : p), "aria-current": active === p || (p === "people" && active === "person") ? "page" : null },
+      h("span.tab-pill"), lang() === "en" ? en : ml)));
 }
 
 let renderSeq = 0;
 async function render() {
-  const [path, query] = (location.hash.slice(2) || "ask").split("?");
+  const [path, query] = (location.hash.slice(2) || "home").split("?");
   const params = Object.fromEntries(new URLSearchParams(query || ""));
-  const route = routes.find((r) => r.path === path) || routes.find((r) => r.path === "ask");
-  shell.toggleAttribute("data-simple", !!route.simple);
-  main.className = "main";
-  drawNav(route.path);
+  const route = routes.find((r) => r.path === path) || routes.find((r) => r.path === "home");
+  shell.dataset.chrome = route.chrome || "legacy";
+  drawChrome(route);
   document.documentElement.lang = lang();
-  document.title = `${t(route.label)} · ${APP_NAME}`;
+  document.title = route.path === "home" ? `${APP_NAME_ML} · ${APP_NAME}: talk to an astrologer in Malayalam` : `${t(route.label)} · ${APP_NAME}`;
   if (route.path !== "admin") trackScreen(route.path, route.label);
-  shell.removeAttribute("data-nav-open");
   const my = ++renderSeq;
-  clear(main).append(h("p.muted", t("loading")));
+  main.className = "main";
+  clear(main).append(h("p.muted.loading", t("loading")));
   try {
     const mod = await route.load();
     if (my !== renderSeq) return;
     clear(main);
+    // older tool screens get a phone header with Back (their own headings stay)
+    if ((route.chrome || "legacy") === "legacy") main.append(h("div.legacy-head", screenHeader({ back: route.back || "#/more" })));
     await mod.render(main, params);
+    window.scrollTo(0, 0);
   } catch (err) {
     console.error(err);
     if (my === renderSeq) clear(main).append(h("div.error", String(err.message || err)));
   }
 }
+
 let shownHash = location.hash;
 window.addEventListener("hashchange", () => {
   // a live call can veto navigation; put the address back and keep the screen as it is
   if (!canLeave()) {
-    history.replaceState(null, "", shownHash || "#/ask");
+    history.replaceState(null, "", shownHash || "#/");
     return;
   }
   shownHash = location.hash;
@@ -98,8 +95,11 @@ window.addEventListener("hashchange", () => {
 });
 let lastLang = lang();
 onChange((w) => {
-  if (w === "ui" && lang() !== lastLang) {
+  if (w !== "ui") return;
+  applyTheme();
+  if (lang() !== lastLang) {
     lastLang = lang();
+    shell.querySelector(".brand-mark").textContent = lang() === "en" ? APP_NAME : APP_NAME_ML;
     render();
   }
 });

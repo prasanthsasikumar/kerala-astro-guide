@@ -146,3 +146,9 @@
 .sheet-foot { padding: var(--space-sm) var(--space-md) calc(var(--space-sm) + env(safe-area-inset-bottom)); border-top: var(--rule-hair); }
 @media (min-width: 700px) { .ask-sheet { margin: auto; border-radius: 20px; } }
 .ask-sheet:focus, .ask-sheet:focus-visible { outline: none; }
+
+/* optional phone number before a call */
+.phone-field { display: flex; flex-direction: column; gap: 6px; margin: 0 auto var(--space-lg); max-width: 360px; text-align: left; }
+.phone-input { min-height: 56px; font-size: 1.15rem; letter-spacing: 0.02em; }
+.phone-hint { font-size: 0.85rem; color: var(--color-ink-3); }
+.phone-hint.is-bad { color: var(--color-bad); }

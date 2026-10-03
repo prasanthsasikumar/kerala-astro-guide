@@ -38,9 +38,10 @@ async function load(out, cursor = null, acc = []) {
   const d = await r.json();
   const calls = [...acc, ...d.calls];
   const people = new Set(calls.map((c) => `${c.person?.name}|${c.person?.date}|${c.person?.time}`));
+  const phones = new Set(calls.map((c) => c.caller?.phone).filter(Boolean));
   const total = calls.reduce((s, c) => s + (c.durationSec || 0), 0);
   out.replaceChildren(
-    h("p.admin-stats", `${calls.length} calls · ${people.size} people · ${mins(total)} talked · avg ${calls.length ? mins(Math.round(total / calls.length)) : "0:00"}`),
+    h("p.admin-stats", `${calls.length} calls · ${people.size} people · ${mins(total)} talked · avg ${calls.length ? mins(Math.round(total / calls.length)) : "0:00"} · ${phones.size} phone numbers`),
     h("p.muted", "From: " + topPlaces(calls)),
     ...calls.map(card),
     d.cursor ? h("button.ask-lang", { type: "button", onclick: () => load(out, d.cursor, calls) }, "Load more") : h("p.muted", "That's everything."));
@@ -60,6 +61,7 @@ function card(c) {
       h("strong", p.name || "—"),
       h("span", ` ${p.gender === "Female" ? "F" : p.gender === "Male" ? "M" : ""} · ${p.date} ${p.timeUnknown ? "(time unknown)" : p.time} · ${(p.place?.name || "").split(",").slice(0, 2).join(",")}`),
       h("small", `${when.toLocaleString()} · ${mins(c.durationSec || 0)} · ${c.lang} · ${c.star || ""}${c.ended ? "" : " · (in progress or cut off)"}`),
+      c.caller?.phone ? h("small", "📞 ", h("a", { href: `tel:${c.caller.phone}` }, c.caller.phone)) : null,
       h("small", "📍 " + (c.location ? [c.location.city, c.location.region, c.location.country].filter(Boolean).join(", ") || "unknown" : "not recorded") + " · " + deviceName(c.device))),
     h("div.admin-transcript", (c.transcript || []).length
       ? c.transcript.map((t) => h("p", { class: t.r === "u" ? "is-user" : "is-astro" }, h("b", t.r === "u" ? "Caller " : "Astrologer "), h("span.muted", mins(t.at || 0) + " "), t.t))

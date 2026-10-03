@@ -39,7 +39,7 @@ function publicEdition() {
   return {
     name: "public-edition",
     configResolved(c) { outDir = path.resolve(c.root, c.build.outDir); },
-    transformIndexHtml: (html) => html.replace(/<title>[^<]*<\/title>/, `<title>${APP_NAME}</title>`),
+    transformIndexHtml: (html) => html.replace(/<title>[^<]*<\/title>/, `<title>കേരള അസ്ട്രോ ഗൈഡ് · ${APP_NAME}: talk to an astrologer in Malayalam</title>`),
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const url = (req.url || "").split("?")[0];

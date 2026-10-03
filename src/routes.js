@@ -1,28 +1,24 @@
 // Route table. Each module exports render(container, params).
-import { t } from "./lib/i18n.js";
-
+// chrome: "tabs" (phone tab bar), "none" (focused screen: stepped form, results, call), "legacy" (older tool
+// screens: a phone Back header is added for them). nav: which sidebar/tab item is highlighted.
 export const routes = [
-  { path: "ask", label: "ask", simple: true, load: () => import("./modules/ask/index.js") },
-  { path: "horoscope", label: "horoscope", load: () => import("./modules/horoscope/index.js") },
-  { path: "porutham", label: "porutham", load: () => import("./modules/porutham/index.js") },
-  { path: "prashnam", label: "prashnam", load: () => import("./modules/prashnam/index.js") },
-  { path: "gocharam", label: "gocharam", load: () => import("./modules/gocharam/index.js") },
-  { path: "panchanga-shuddhi", label: "panchangaShuddhi", load: () => import("./modules/panchanga-shuddhi/index.js") },
-  { path: "divasa-panchangam", label: "divasaPanchangam", load: () => import("./modules/divasa-panchangam/index.js") },
-  { path: "date-converter", label: "dateConverter", load: () => import("./modules/date-converter/index.js") },
-  { path: "nak-porutham", label: "nakPorutham", load: () => import("./modules/nak-porutham/index.js") },
-  { path: "rasi-pramanam", label: "rasiPramanam", load: () => import("./modules/rasi-pramanam/index.js") },
-  { path: "saved", label: "saved", load: () => import("./modules/saved.js") },
-  { path: "settings", label: "settings", load: () => import("./modules/settings.js") },
-  { path: "about", label: "about", load: () => import("./modules/about.js") },
-  { path: "privacy", label: "privacy", simple: true, load: () => import("./modules/privacy.js") },
-  { path: "admin", label: "admin", simple: true, load: () => import("./modules/admin.js") },
-];
-
-const by = (p) => routes.find((r) => r.path === p);
-export const navGroups = () => [
-  { items: ["ask", "horoscope", "porutham", "prashnam", "gocharam"].map(by) },
-  { label: t("muhurtham"), items: ["panchanga-shuddhi", "divasa-panchangam"].map(by) },
-  { label: t("tools"), items: ["date-converter", "nak-porutham", "rasi-pramanam", "saved"].map(by) },
-  { label: "", items: ["settings", "about"].map(by) },
+  { path: "home", label: "home", chrome: "tabs", load: () => import("./modules/home.js") },
+  { path: "people", label: "people", chrome: "tabs", load: () => import("./modules/people.js") },
+  { path: "person", label: "people", chrome: "none", nav: "people", load: () => import("./modules/person-form.js") },
+  { path: "more", label: "more", chrome: "tabs", load: () => import("./modules/more.js") },
+  { path: "ask", label: "ask", chrome: "none", load: () => import("./modules/ask/index.js") },
+  { path: "horoscope", label: "horoscope", chrome: "none", load: () => import("./modules/horoscope/index.js") },
+  { path: "porutham", label: "porutham", back: "#/", load: () => import("./modules/porutham/index.js") },
+  { path: "prashnam", label: "prashnam", nav: "more", load: () => import("./modules/prashnam/index.js") },
+  { path: "gocharam", label: "gocharam", nav: "more", load: () => import("./modules/gocharam/index.js") },
+  { path: "panchanga-shuddhi", label: "panchangaShuddhi", nav: "more", load: () => import("./modules/panchanga-shuddhi/index.js") },
+  { path: "divasa-panchangam", label: "divasaPanchangam", back: "#/", load: () => import("./modules/divasa-panchangam/index.js") },
+  { path: "date-converter", label: "dateConverter", nav: "more", load: () => import("./modules/date-converter/index.js") },
+  { path: "nak-porutham", label: "nakPorutham", nav: "more", load: () => import("./modules/nak-porutham/index.js") },
+  { path: "rasi-pramanam", label: "rasiPramanam", nav: "more", load: () => import("./modules/rasi-pramanam/index.js") },
+  { path: "saved", label: "saved", nav: "people", back: "#/people", load: () => import("./modules/saved.js") },
+  { path: "settings", label: "settings", chrome: "tabs", load: () => import("./modules/settings.js") },
+  { path: "about", label: "about", nav: "more", load: () => import("./modules/about.js") },
+  { path: "privacy", label: "privacy", chrome: "none", load: () => import("./modules/privacy.js") },
+  { path: "admin", label: "admin", chrome: "none", load: () => import("./modules/admin.js") },
 ];

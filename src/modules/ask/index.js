@@ -4,15 +4,15 @@
 import "../../styles/ask.css";
 import { h } from "../../lib/dom.js";
 import { tx, lang } from "../../lib/i18n.js";
-import { setUI, listCharts, saveChart, deleteChart } from "../../lib/store.js";
+import { getUI, setUI } from "../../lib/store.js";
 import { getCtx, inputToQuery, queryToInput } from "../../lib/ctx.js";
-import { placePicker } from "../../components/place-picker.js";
-import { tzOffsetAt } from "../../lib/edition.js";
 import { chartSummary } from "../../engine/chart-summary.js";
-import { NAK_EN, RASI_ML, RASI_EN } from "../../engine/names.js";
-import { APP_NAME_ML, APP_NAME } from "../../lib/edition.js";
+import { NAK_EN, RASI_EN } from "../../engine/names.js";
 import { track } from "../../lib/analytics.js";
 import { LiveCall } from "./call.js";
+import { people, initialOf, hrefFor, lastPerson, rememberPerson } from "../../lib/people.js";
+import { bi, biStack } from "../../ui/bi.js";
+import { openSheet } from "../../ui/sheet.js";
 import { setNavGuard, clearNavGuard } from "../../lib/nav-guard.js";
 
 // 5 minutes; a shorter limit can be set for testing on the local dev server only (?limit=40)
@@ -32,135 +32,35 @@ const icon = (name, cls = "ask-icon") => {
   return s;
 };
 
-const personQuery = (c) => inputToQuery(c) + (c.timeUnknown ? "&tu=1" : "");
-const initial = (name) => (name || "?").trim().charAt(0).toUpperCase();
-const shortPlace = (c) => (c.place?.name || "").split(",")[0];
-const fmtDate = (d) => d.split("-").reverse().join("-");
 
 export function render(el, params) {
   el.classList.add("ask");
-  const people = listCharts();
   const input = queryToInput(params);
   if (input) {
     input.timeUnknown = params.tu === "1";
+    rememberPerson(input);
     return callScreen(el, input);
   }
-  if (params.edit) {
-    const c = people.find((p) => p.id === params.edit);
-    if (c) return formScreen(el, c, people.length > 0);
-  }
-  if (params.new === "1" || people.length === 0) return formScreen(el, null, people.length > 0);
-  homeScreen(el, people);
+  if (params.edit) return location.replace(`#/person?for=ask&edit=${params.edit}`);
+  const last = params.new === "1" ? null : lastPerson();
+  location.replace(last ? hrefFor(last, "ask") : "#/person?for=ask");
 }
 
-function topBar({ back } = {}) {
-  return h("header.ask-top",
-    back
-      ? h("a.ask-back", { href: back, "aria-label": tx("തിരികെ", "Back") }, icon("back", "ask-icon-sm"))
-      : h("div.ask-brand", h("img.brand-logo", { src: "/logo-mark.png", alt: "", width: 30, height: 30 }), h("span", lang() === "en" ? APP_NAME : APP_NAME_ML)),
-    h("button.ask-lang", {
-      type: "button",
-      onclick: () => {
-        const next = lang() === "en" ? "ml" : "en";
-        track("language_switch", { to: next });
-        setUI({ lang: next });
-      },
-    }, lang() === "en" ? "മലയാളം" : "English"));
+function callHeader(input) {
+  const pill = h("button.pill", { type: "button", "aria-haspopup": "dialog" }, input.name || "—", " ▾");
+  pill.addEventListener("click", () => {
+    const list = people();
+    openSheet(tx("ആരുടെ ജാതകം?", "Whose horoscope?"), h("div.rows",
+      list.map((p) => h("a.row.row-person", { href: hrefFor(p, "ask"), onclick: () => document.querySelector("dialog.ask-sheet")?.close() },
+        h("span.left", h("span.avatar.avatar-lg", initialOf(p.name)), h("strong", p.name || "—")), h("span.chev", "›"))),
+      h("a.row", { href: "#/person?for=ask", onclick: () => document.querySelector("dialog.ask-sheet")?.close() }, biStack("പുതിയ ആളെ ചേർക്കുക", "Add a person"), h("span.chev", "+"))));
+  });
+  return h("header.screen-head", h("a.back-link", { href: "#/" }, "‹ ", bi("ഹോം", "Home")), pill);
 }
 
-function footer() {
-  return h("footer.ask-foot",
-    h("a", { href: "#/horoscope" }, tx("എല്ലാ ജ്യോതിഷ ഉപകരണങ്ങളും", "All astrology tools")),
-    h("span", "·"),
-    h("a", { href: "#/privacy" }, tx("സ്വകാര്യത", "Privacy")));
-}
-
-// ---------- 1. home ----------
-function homeScreen(el, people) {
-  el.append(
-    topBar(),
-    h("section.ask-hero",
-      h("div.ask-hero-avatar", h("img", { src: "/logo-mark.png", alt: "" })),
-      h("h1", tx("ജ്യോതിഷനോട് സംസാരിക്കാം", "Talk to the astrologer")),
-      h("p", tx("ഫോണിൽ സംസാരിക്കുന്നതുപോലെ, മലയാളത്തിൽ.", "Just like a phone call."))),
-    h("h2.ask-label", tx("ആരുടെ ജാതകം?", "Whose horoscope?")),
-    h("div.ask-people", people.map((c) =>
-      h("a.ask-person", { href: "#/ask?" + personQuery(c) },
-        h("span.ask-person-initial", initial(c.name)),
-        h("span.ask-person-text", h("strong", c.name || "—"), h("span", `${fmtDate(c.date)} · ${shortPlace(c)}`)),
-        icon("chevron", "ask-icon-sm")))),
-    h("a.ask-add", { href: "#/ask?new=1" }, icon("plus", "ask-icon-sm"), tx("പുതിയ ആളെ ചേർക്കുക", "Add a person")),
-    footer());
-}
-
-// ---------- 2. birth details ----------
-function formScreen(el, existing, hasPeople) {
-  const v = existing || { name: "", gender: "", date: "", time: "", place: null, timeUnknown: false };
-  let gender = v.gender;
-  let place = v.place;
-  const name = h("input.input", { type: "text", value: v.name, autocomplete: "off", enterkeyhint: "next", required: true });
-  const gBtns = [["Male", "പുരുഷൻ", "Male"], ["Female", "സ്ത്രീ", "Female"]].map(([val, ml, en]) =>
-    h("button.ask-choice", { type: "button", "aria-pressed": String(gender === val), onclick: () => { gender = val; gBtns.forEach((b, i) => b.setAttribute("aria-pressed", String(i === (val === "Male" ? 0 : 1)))); } }, tx(ml, en)));
-  const date = h("input.input", { type: "date", value: v.date, min: "1800-01-01", max: "2399-12-31", required: true });
-  const time = h("input.input", { type: "time", value: v.timeUnknown ? "" : v.time });
-  const unknown = h("input", { type: "checkbox", checked: !!v.timeUnknown });
-  const syncTime = () => { time.disabled = unknown.checked; if (unknown.checked) time.value = ""; };
-  unknown.addEventListener("change", syncTime);
-  syncTime();
-  const error = h("p.ask-error", { role: "alert", hidden: true });
-
-  const form = h("form.ask-form", {
-    novalidate: true,
-    onsubmit: (e) => {
-      e.preventDefault();
-      const miss = !name.value.trim() ? tx("പേര് എഴുതുക", "Enter a name")
-        : !gender ? tx("പുരുഷനോ സ്ത്രീയോ എന്ന് തിരഞ്ഞെടുക്കുക", "Choose male or female")
-        : !date.value ? tx("ജനന തീയതി നൽകുക", "Enter the date of birth")
-        : !unknown.checked && !time.value ? tx("ജനന സമയം നൽകുക, അല്ലെങ്കിൽ 'സമയം അറിയില്ല' തിരഞ്ഞെടുക്കുക", "Enter the birth time, or tick 'time not known'")
-        : !Number.isFinite(place?.lat) ? tx("ജനിച്ച സ്ഥലം ലിസ്റ്റിൽ നിന്ന് തിരഞ്ഞെടുക്കുക", "Pick the birth place from the list")
-        : "";
-      if (miss) {
-        error.textContent = miss;
-        error.hidden = false;
-        return;
-      }
-      const t = unknown.checked ? "12:00" : time.value;
-      const p = place.tzName ? { ...place, tz: tzOffsetAt(place.tzName, date.value, t) } : place;
-      const saved = saveChart({ ...(existing || {}), name: name.value.trim(), gender, date: date.value, time: t, timeUnknown: unknown.checked, place: p, kind: "birth" });
-      if (!existing) track("person_added", { time_unknown: unknown.checked });
-      location.hash = "#/ask?" + personQuery(saved);
-    },
-  },
-    h("label.ask-field", h("span", tx("പേര്", "Name")), name),
-    h("div.ask-field", h("span", tx("ആൺ / പെൺ", "Male / female")), h("div.ask-choices", gBtns)),
-    h("label.ask-field", h("span", tx("ജനന തീയതി", "Date of birth")), date),
-    h("div.ask-field",
-      h("label", { for: "ask-time" }, tx("ജനന സമയം", "Time of birth")),
-      Object.assign(time, { id: "ask-time" }),
-      h("label.ask-check", unknown, h("span", tx("സമയം കൃത്യമായി അറിയില്ല", "I don't know the exact time")))),
-    h("div.ask-field.ask-place", h("span", tx("ജനിച്ച സ്ഥലം", "Place of birth")), placePicker(place, (p) => { place = p; })),
-    error,
-    h("div.ask-sticky", h("button.ask-primary", { type: "submit" }, tx("തുടരുക", "Continue"))));
-
-  el.append(...[
-    topBar({ back: hasPeople ? "#/ask" : null }),
-    h("h1.ask-title", existing ? tx("വിവരങ്ങൾ മാറ്റുക", "Edit details") : tx("ആരുടെ ജാതകമാണ് നോക്കേണ്ടത്?", "Whose horoscope shall we look at?")),
-    form,
-    existing && h("button.ask-link-danger", {
-      type: "button",
-      onclick: () => {
-        if (!confirm(tx("ഈ ആളെ നീക്കം ചെയ്യട്ടെ?", "Remove this person?"))) return;
-        deleteChart(existing.id);
-        location.hash = "#/ask";
-      },
-    }, tx("ഈ ആളെ നീക്കം ചെയ്യുക", "Remove this person")),
-    footer(),
-  ].filter(Boolean));
-}
-
-// ---------- 3. the call ----------
+// ---------- the call ----------
 async function callScreen(el, input) {
-  el.append(topBar({ back: "#/ask" }));
+  el.append(callHeader(input));
   const ctx = await getCtx();
   const { text: facts, chart } = chartSummary(ctx, input);
   const T = chart.time;
@@ -181,7 +81,26 @@ async function callScreen(el, input) {
     h("p.call-about", input.name || "", " · ", tx(`${nakMl} നക്ഷത്രം`, `${NAK_EN[T.nakIdx - 1]} star`),
       input.timeUnknown ? h("span.call-flag", tx(" · സമയം അറിയില്ല", " · time unknown")) : null),
     status, timer);
+  // optional: the caller's number, so a summary can be sent by SMS (kept on this phone too)
+  const cleanPhone = (v) => v.replace(/[^\d+]/g, "");
+  const validPhone = (v) => /^\+?\d{7,15}$/.test(cleanPhone(v));
+  const phoneInput = h("input.big-input.phone-input", {
+    type: "tel", inputmode: "tel", autocomplete: "tel", value: getUI().phone || "", placeholder: "+91 98765 43210",
+    "aria-label": tx("നിങ്ങളുടെ ഫോൺ നമ്പർ", "Your phone number"),
+  });
+  const phoneHint = h("span.phone-hint", tx("കോളിന്റെ ചുരുക്കം SMS ആയി അയയ്ക്കാൻ. വേണമെങ്കിൽ മാത്രം.", "To send you a summary by SMS. Optional."));
+  phoneInput.addEventListener("change", () => {
+    const v = phoneInput.value.trim();
+    if (v && !validPhone(v)) { phoneHint.textContent = tx("ശരിയായ നമ്പർ നൽകുക, ഉദാ: +91 98765 43210", "Enter a valid number, e.g. +91 98765 43210"); phoneHint.classList.add("is-bad"); return; }
+    phoneHint.classList.remove("is-bad");
+    phoneHint.textContent = v ? tx("✓ ഈ ഫോണിൽ ഓർത്തുവയ്ക്കും", "✓ Remembered on this phone") : tx("കോളിന്റെ ചുരുക്കം SMS ആയി അയയ്ക്കാൻ. വേണമെങ്കിൽ മാത്രം.", "To send you a summary by SMS. Optional.");
+    setUI({ phone: v ? cleanPhone(v) : "" });
+  });
+  const phoneField = h("label.phone-field",
+    h("span.field-label", bi("നിങ്ങളുടെ ഫോൺ നമ്പർ", "Your phone number"), h("span.bi-gloss", tx(" (വേണമെങ്കിൽ)", " (optional)"))),
+    phoneInput, phoneHint);
   const dock = h("div.call-dock",
+    phoneField,
     h("div.call-controls", muteBtn, callBtn, endBtn),
     notice);
   // the chart opens over the call screen, so a call in progress is never interrupted
@@ -215,7 +134,7 @@ async function callScreen(el, input) {
   };
   const person = () => ({ name: input.name, gender: input.gender, date: input.date, time: input.time, timeUnknown: !!input.timeUnknown, place: input.place });
   const payload = (end) => ({
-    ...session, person: person(), star, lang: lang(), startedAt: new Date(started || Date.now()).toISOString(),
+    ...session, person: person(), star, caller: { phone: getUI().phone || "" }, lang: lang(), startedAt: new Date(started || Date.now()).toISOString(),
     durationSec: started ? Math.round((Date.now() - started) / 1000) : 0, transcript: call?.transcript || [], end,
   });
   const saveLog = (end = false, beacon = false) => {
@@ -240,6 +159,7 @@ async function callScreen(el, input) {
     muteBtn.hidden = !live || s === "connecting";
     timer.hidden = !live || s === "connecting";
     notice.hidden = live;
+    phoneField.hidden = live;
     if (editLink) { editLink.hidden = live; sep.hidden = live; }
     if (live) {
       setNavGuard(guard);
@@ -266,7 +186,8 @@ async function callScreen(el, input) {
 
   callBtn.addEventListener("click", async () => {
     setStatus("connecting");
-    track("call_start", { lang: lang(), time_unknown: !!input.timeUnknown });
+    if (phoneInput.value.trim() && validPhone(phoneInput.value)) setUI({ phone: cleanPhone(phoneInput.value) });
+    track("call_start", { lang: lang(), time_unknown: !!input.timeUnknown, phone_given: !!getUI().phone });
     const t0 = Date.now();
     started = 0;
     try {
@@ -367,17 +288,8 @@ async function callScreen(el, input) {
   window.addEventListener("hashchange", leave);
 }
 
-// Chart panel over the call screen (a modal sheet; the call keeps running behind it).
+// Chart panel over the call screen (the call keeps running behind it).
 async function openChartSheet(chart, ctx, inCall) {
   const { render: renderCharts } = await import("../horoscope/tabs/charts.js");
-  const close = h("button.ask-primary.sheet-close", { type: "button" }, tx("അടയ്ക്കുക", "Close"));
-  const dlg = h("dialog.ask-sheet", { "aria-label": tx("ഗ്രഹനില", "Chart") },
-    h("div.sheet-head", h("strong", tx("ഗ്രഹനില", "Chart")), inCall ? h("span.sheet-live", tx("● കോൾ തുടരുന്നു", "● Call continues")) : null),
-    h("div.sheet-body", renderCharts(chart, ctx)),
-    h("div.sheet-foot", close));
-  close.addEventListener("click", () => dlg.close());
-  dlg.addEventListener("close", () => dlg.remove());
-  dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
-  document.body.append(dlg);
-  dlg.showModal();
+  openSheet(tx("ഗ്രഹനില", "Chart"), renderCharts(chart, ctx), { extraHead: inCall ? h("span.sheet-live", tx("● കോൾ തുടരുന്നു", "● Call continues")) : null });
 }
