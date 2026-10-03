@@ -50,3 +50,5 @@
 @media (prefers-reduced-motion: reduce) {
   .call-avatar::before, .call-avatar::after { transform: none !important; animation: none !important; }
 }
+/* `hidden` must win over the display rules above */
+.ask [hidden] { display: none !important; }
