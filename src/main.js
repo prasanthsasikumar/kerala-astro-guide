@@ -4,6 +4,7 @@ import { t, lang } from "./lib/i18n.js";
 import { getUI, setUI, onChange, initSettings } from "./lib/store.js";
 import { DEFAULTS } from "./engine/settings.js";
 import { APP_NAME, APP_NAME_ML } from "./lib/edition.js";
+import { trackScreen } from "./lib/analytics.js";
 
 initSettings(DEFAULTS);
 import("./modules/settings.js").then((m) => m.applyTypography());
@@ -62,14 +63,15 @@ function drawNav(current) {
 
 let renderSeq = 0;
 async function render() {
-  const [path, query] = (location.hash.slice(2) || "horoscope").split("?");
+  const [path, query] = (location.hash.slice(2) || "ask").split("?");
   const params = Object.fromEntries(new URLSearchParams(query || ""));
-  const route = routes.find((r) => r.path === path) || routes.find((r) => r.path === "horoscope");
+  const route = routes.find((r) => r.path === path) || routes.find((r) => r.path === "ask");
   shell.toggleAttribute("data-simple", !!route.simple);
   main.className = "main";
   drawNav(route.path);
   document.documentElement.lang = lang();
   document.title = `${t(route.label)} · ${APP_NAME}`;
+  if (route.path !== "admin") trackScreen(route.path, route.label);
   shell.removeAttribute("data-nav-open");
   const my = ++renderSeq;
   clear(main).append(h("p.muted", t("loading")));

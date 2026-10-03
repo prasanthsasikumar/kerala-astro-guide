@@ -62,19 +62,21 @@ function publicEdition() {
   };
 }
 
-// Dev only: serve the call-token function (api/live-token.js) from the Vite server.
+// Dev only: serve the serverless functions in api/ from the Vite server.
 function askApi(env) {
   return {
-    name: "ask-api",
+    name: "api-functions",
     configureServer(server) {
-      server.middlewares.use("/api/live-token", async (req, res) => {
-        const { handleLiveToken: handleAsk } = await server.ssrLoadModule("/api/live-token.js");
+      server.middlewares.use("/api", async (req, res, next) => {
+        const name = (req.url || "").split("?")[0].replace(/^\//, "");
+        if (!/^[a-z-]+$/.test(name) || !existsSync(path.join(root, "api", name + ".js"))) return next();
+        const mod = await server.ssrLoadModule(`/api/${name}.js`);
         const chunks = [];
         for await (const c of req) chunks.push(c);
-        const request = new Request("http://localhost/api/live-token", {
-          method: req.method, headers: req.headers, body: req.method === "POST" ? Buffer.concat(chunks) : undefined,
+        const request = new Request("http://localhost/api" + req.url, {
+          method: req.method, headers: req.headers, body: ["GET", "HEAD"].includes(req.method) ? undefined : Buffer.concat(chunks),
         });
-        const response = await handleAsk(request, { ...process.env, ...env });
+        const response = await mod.handle(request, { ...process.env, ...env });
         res.statusCode = response.status;
         response.headers.forEach((v, k) => res.setHeader(k, v));
         if (!response.body) return res.end();

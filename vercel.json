@@ -36,6 +36,12 @@
   "functions": {
     "api/live-token.js": {
       "maxDuration": 15
+    },
+    "api/log.js": {
+      "maxDuration": 15
+    },
+    "api/admin.js": {
+      "maxDuration": 30
     }
   }
 }

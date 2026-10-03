@@ -19,7 +19,7 @@ export function placePicker(initial, onPick, { required = false } = {}) {
   let results = [];
   let active = -1;
   const input = h("input.input", {
-    type: "text", value: place?.name || "", placeholder: tx("സ്ഥലത്തിന്റെ പേര് ഇംഗ്ലീഷിൽ (ഉദാ. Thiruvalla)", "Type a town or village"),
+    type: "text", value: place?.name || "", placeholder: tx("ഉദാ: Thiruvalla", "e.g. Thiruvalla"),
     role: "combobox", "aria-expanded": "false", "aria-autocomplete": "list", autocomplete: "off", required,
   });
   const list = h("ul.combo-list", { role: "listbox", hidden: true });
@@ -39,7 +39,7 @@ export function placePicker(initial, onPick, { required = false } = {}) {
 
   const sync = () => {
     if (!place) {
-      summary.textContent = tx("ലിസ്റ്റിൽ നിന്ന് സ്ഥലം തിരഞ്ഞെടുക്കുക", "Pick the place from the list");
+      summary.textContent = tx("സ്ഥലപ്പേര് ഇംഗ്ലീഷിൽ ടൈപ്പ് ചെയ്ത് ലിസ്റ്റിൽ നിന്ന് തിരഞ്ഞെടുക്കുക", "Type the town or village and pick it from the list");
       summary.classList.add("is-empty");
       return;
     }

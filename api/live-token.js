@@ -3,6 +3,7 @@
 // then talks to Gemini directly with that token. The API key never leaves the server.
 // POST { code, lang: "ml" | "en", chart: "<facts>" } -> { token, model }
 import { timingSafeEqual } from "node:crypto";
+import { newSession } from "./_lib/session.js";
 
 const LIMITS = { chart: 12000 };
 const RATE = { windowMs: 60 * 60 * 1000, max: 6 }; // calls per IP per hour, best effort per instance
@@ -18,6 +19,8 @@ SPEECH:
 - Say dates and numbers the way people speak them (for example "അടുത്ത വർഷം ഏപ്രിൽ വരെ").
 - If they interrupt, stop and listen. If you did not hear clearly, politely ask them to repeat.
 - When the call starts, greet them warmly (നമസ്കാരം), say you have looked at the horoscope of the person named below, and ask what they would like to know. Keep the greeting brief.
+
+BIRTH TIME: if the facts say the birth time is unknown, do not use lagna, houses or Mandi; base everything on the Moon sign, birth star, planets in signs and the dasa (mention gently that the exact time would make it more precise).
 
 GROUNDING: The CHART FACTS below were calculated precisely (sidereal, Lahiri ayanamsa, Kerala conventions). Use ONLY these facts for planet positions, stars, dasa periods and dates. Never invent them. If they ask about someone else, say they can add that person's birth details in the app and call again.
 
@@ -90,8 +93,10 @@ export async function handleLiveToken(request, env = process.env) {
     console.error("auth_tokens", res.status, JSON.stringify(tok).slice(0, 300));
     return json(502, { error: "unavailable" });
   }
-  return json(200, { token: tok.name, model });
+  return json(200, { token: tok.name, model, session: newSession(env.LOG_SECRET) });
 }
+
+export const handle = handleLiveToken;
 
 export function POST(request) {
   return handleLiveToken(request);

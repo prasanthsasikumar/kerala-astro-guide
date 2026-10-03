@@ -39,8 +39,9 @@ const unb64 = (str) => {
  *         onLevel({ me, them }) 0..1 each animation frame, onError(err)
  */
 export class LiveCall {
-  constructor({ token, model, greeting, onState, onLevel, onError }) {
-    Object.assign(this, { token, model, greeting, onState, onLevel, onError });
+  constructor({ token, model, greeting, onState, onLevel, onError, onTranscript }) {
+    Object.assign(this, { token, model, greeting, onState, onLevel, onError, onTranscript });
+    this.transcript = []; // [{ r: "u" | "a", t, at }] at = seconds since the call connected
     this.muted = false;
     this.sources = new Set();
     this.nextTime = 0;
@@ -90,6 +91,7 @@ export class LiveCall {
       this.ws.onmessage = async (ev) => {
         const msg = JSON.parse(typeof ev.data === "string" ? ev.data : await ev.data.text());
         if (msg.setupComplete) {
+          this.connectedAt = Date.now();
           resolve();
           return;
         }
@@ -115,10 +117,17 @@ export class LiveCall {
     for (const p of sc?.modelTurn?.parts || []) {
       if (p.inlineData?.data) this.play(p.inlineData.data);
     }
-    // transcripts are not shown on screen; kept for debugging
-    if (sc?.inputTranscription?.text) console.debug("[caller]", sc.inputTranscription.text);
-    if (sc?.outputTranscription?.text) console.debug("[astrologer]", sc.outputTranscription.text);
+    // transcripts are never shown on screen; they are saved to the private call log
+    if (sc?.inputTranscription?.text) this.addText("u", sc.inputTranscription.text);
+    if (sc?.outputTranscription?.text) this.addText("a", sc.outputTranscription.text);
     if (msg.goAway) this.onError?.(new Error("goAway"));
+  }
+
+  addText(r, text) {
+    const last = this.transcript.at(-1);
+    if (last && last.r === r) last.t += text;
+    else this.transcript.push({ r, t: text.trimStart(), at: Math.round((Date.now() - (this.connectedAt || Date.now())) / 1000) });
+    this.onTranscript?.(this.transcript);
   }
 
   play(data) {

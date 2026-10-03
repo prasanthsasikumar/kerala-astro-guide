@@ -21,7 +21,7 @@ await ev("document.querySelector('.call-start').click()");
 const states = [];
 for (let i = 0; i < +secs * 2; i++) {
   await new Promise((r) => setTimeout(r, 500));
-  const s = await ev("document.querySelector('.call-stage').dataset.state + ' | me=' + (+getComputedStyle(document.querySelector('.call-stage')).getPropertyValue('--me') > 0.02 ? 'voice' : 'quiet')");
+  const s = await ev("document.querySelector('.call-stage').dataset.state");
   if (states.at(-1)?.s !== s) states.push({ t: stamp(), s });
 }
 await ev("document.querySelector('.call-end').click()");

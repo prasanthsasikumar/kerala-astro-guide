@@ -25,6 +25,7 @@ export function chartSummary(ctx, input, now = new Date()) {
   const L = [];
 
   L.push(`PERSON: ${input.name || "(no name)"}, ${input.gender}, born ${input.date} ${input.time} at ${input.place.name} (lat ${(+input.place.lat).toFixed(2)}, lon ${(+input.place.lon).toFixed(2)}, UTC${input.place.tz >= 0 ? "+" : ""}${input.place.tz}). Age now: ${age.y} years ${age.m} months.`);
+  if (input.timeUnknown) L.push("BIRTH TIME UNKNOWN: 12:00 noon was used. Lagna, houses, Mandi and anything house-based are unreliable; the Moon sign may also be uncertain near a sign change, and dasa dates are approximate.");
   L.push(`Malayalam date: ${T.malayalam.day} ${MAL_MONTH_EN[T.malayalam.month - 1]} (${RASI_ML[T.malayalam.month - 1]}) ${T.malayalam.year} (Kollam era). Weekday (sunrise-based): ${WEEKDAY_EN[T.indianDow - 1]}.`);
   L.push(`Birth star (janma nakshatra): ${nakName(db, T.nakIdx)}, pada ${T.pada}. Moon sign (koor): ${sign(moonSign)}. Lagna: ${sign(lagna)} ${deg(P.Lagna.lon)}.`);
   L.push(`Tithi: ${db.tblThidhi[T.tithi - 1].Thidhi}. Nithya yoga: ${db.tblNityayoga[T.yoga - 1].Name}. Karanam: ${db.tblKaranam[T.karana - 1].karanam}.`);

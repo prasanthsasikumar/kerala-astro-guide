@@ -15,6 +15,8 @@ export const routes = [
   { path: "saved", label: "saved", load: () => import("./modules/saved.js") },
   { path: "settings", label: "settings", load: () => import("./modules/settings.js") },
   { path: "about", label: "about", load: () => import("./modules/about.js") },
+  { path: "privacy", label: "privacy", simple: true, load: () => import("./modules/privacy.js") },
+  { path: "admin", label: "admin", simple: true, load: () => import("./modules/admin.js") },
 ];
 
 const by = (p) => routes.find((r) => r.path === p);

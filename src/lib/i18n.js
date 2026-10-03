@@ -5,7 +5,9 @@ import { APP_NAME, APP_NAME_ML } from "./edition.js";
 const L = {
   appName: [APP_NAME_ML, APP_NAME],
   about: ["വിവരം", "About"],
-  ask: ["ജ്യോതിഷനോട് ചോദിക്കാം", "Ask the astrologer"],
+  ask: ["ജ്യോതിഷനോട് സംസാരിക്കാം", "Talk to the astrologer"],
+  privacy: ["സ്വകാര്യത", "Privacy"],
+  admin: ["Admin", "Admin"],
   horoscope: ["ജാതകം", "Horoscope"],
   porutham: ["വിവാഹപൊരുത്തം", "Marriage matching"],
   prashnam: ["പ്രശ്നം", "Prashnam"],
