@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: [{ find: /^@private\//, replacement: path.join(root, isPublic ? "src/private-stub" : "src/private") + "/" }],
     },
-    plugins: isPublic ? [publicEdition()] : [],
+    plugins: [askApi(loadEnv(mode, root, "")), ...(isPublic ? [publicEdition()] : [])],
   };
 });
 
@@ -58,6 +58,34 @@ function publicEdition() {
       if (!outDir || !existsSync(outDir)) return;
       for (const p of FULL_ONLY) rmSync(path.join(outDir, p), { recursive: true, force: true });
       writeFileSync(path.join(outDir, "manifest.webmanifest"), manifest());
+    },
+  };
+}
+
+// Dev only: serve the astrologer function (api/astrologer.js) from the Vite server.
+function askApi(env) {
+  return {
+    name: "ask-api",
+    configureServer(server) {
+      server.middlewares.use("/api/astrologer", async (req, res) => {
+        const { handleAsk } = await server.ssrLoadModule("/api/astrologer.js");
+        const chunks = [];
+        for await (const c of req) chunks.push(c);
+        const request = new Request("http://localhost/api/astrologer", {
+          method: req.method, headers: req.headers, body: req.method === "POST" ? Buffer.concat(chunks) : undefined,
+        });
+        const response = await handleAsk(request, { ...process.env, ...env });
+        res.statusCode = response.status;
+        response.headers.forEach((v, k) => res.setHeader(k, v));
+        if (!response.body) return res.end();
+        const reader = response.body.getReader();
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          res.write(value);
+        }
+        res.end();
+      });
     },
   };
 }

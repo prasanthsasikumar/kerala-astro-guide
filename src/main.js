@@ -64,7 +64,9 @@ let renderSeq = 0;
 async function render() {
   const [path, query] = (location.hash.slice(2) || "horoscope").split("?");
   const params = Object.fromEntries(new URLSearchParams(query || ""));
-  const route = routes.find((r) => r.path === path) || routes[0];
+  const route = routes.find((r) => r.path === path) || routes.find((r) => r.path === "horoscope");
+  shell.toggleAttribute("data-simple", !!route.simple);
+  main.className = "main";
   drawNav(route.path);
   document.documentElement.lang = lang();
   document.title = `${t(route.label)} · ${APP_NAME}`;

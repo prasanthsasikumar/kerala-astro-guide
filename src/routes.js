@@ -2,6 +2,7 @@
 import { t } from "./lib/i18n.js";
 
 export const routes = [
+  { path: "ask", label: "ask", simple: true, load: () => import("./modules/ask/index.js") },
   { path: "horoscope", label: "horoscope", load: () => import("./modules/horoscope/index.js") },
   { path: "porutham", label: "porutham", load: () => import("./modules/porutham/index.js") },
   { path: "prashnam", label: "prashnam", load: () => import("./modules/prashnam/index.js") },
@@ -18,7 +19,7 @@ export const routes = [
 
 const by = (p) => routes.find((r) => r.path === p);
 export const navGroups = () => [
-  { items: ["horoscope", "porutham", "prashnam", "gocharam"].map(by) },
+  { items: ["ask", "horoscope", "porutham", "prashnam", "gocharam"].map(by) },
   { label: t("muhurtham"), items: ["panchanga-shuddhi", "divasa-panchangam"].map(by) },
   { label: t("tools"), items: ["date-converter", "nak-porutham", "rasi-pramanam", "saved"].map(by) },
   { label: "", items: ["settings", "about"].map(by) },

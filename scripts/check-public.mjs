@@ -99,6 +99,22 @@ for (const f of tracked) {
   for (const m of MARKERS) if (text.toLowerCase().includes(m.toLowerCase())) problems.push(`${f}: contains "${m}"`);
 }
 
+// ---------- 4. secrets (API keys, family code) ----------
+const secretValues = existsSync(path.join(web, ".env.local"))
+  ? readFileSync(path.join(web, ".env.local"), "utf8").split("\n")
+      .filter((l) => /^[A-Z_]*(KEY|CODE|SECRET|TOKEN|PASSWORD)[A-Z_]*=/.test(l))
+      .map((l) => l.split("=").slice(1).join("=").trim()).filter((v) => v.length >= 8)
+  : [];
+const KEY_SHAPES = [/AIza[0-9A-Za-z_-]{30,}/, /\bAQ\.[0-9A-Za-z_-]{30,}/, /sk-[0-9A-Za-z]{20,}/];
+const secretScan = (label, text) => {
+  if (secretValues.some((v) => text.includes(v))) problems.push(`${label}: contains a value from .env.local`);
+  if (KEY_SHAPES.some((r) => r.test(text))) problems.push(`${label}: contains something shaped like an API key`);
+};
+for (const f of files(dist)) if (TEXT_EXT.test(f)) secretScan(rel(f), readFileSync(f, "utf8"));
+for (const f of tracked) if (TEXT_EXT.test(f) || /^\.env/.test(f)) secretScan(f, readFileSync(path.join(web, f), "utf8"));
+if (tracked.some((f) => /(^|\/)\.env(\.|$)(?!example)/.test(f))) problems.push("an .env file would be tracked");
+console.log(`secret scan: ${secretValues.length} local secrets checked`);
+
 if (problems.length) {
   console.error(`\ncheck-public FAILED (${problems.length}):`);
   for (const p of problems) console.error("  " + p);

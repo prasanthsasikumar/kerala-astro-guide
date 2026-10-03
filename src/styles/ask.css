@@ -1,0 +1,47 @@
+/* Ask the astrologer: large, calm, single column for elders */
+.shell[data-simple] { grid-template-columns: minmax(0, 1fr); }
+.shell[data-simple] .sidebar, .shell[data-simple] .topbar { display: none; }
+.main.ask { max-width: 760px; margin: 0 auto; padding: var(--space-md) var(--space-md) var(--space-2xl); font-size: 1.15rem; }
+.ask-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); flex-wrap: wrap; padding-bottom: var(--space-md); border-bottom: var(--rule-hair); margin-bottom: var(--space-lg); }
+.ask-brand { display: flex; align-items: center; gap: var(--space-xs); font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; color: var(--color-accent); }
+.ask-head-actions { display: flex; gap: var(--space-xs); align-items: center; flex-wrap: wrap; }
+.ask .seg button, .ask .btn { min-height: 44px; font-size: 1rem; }
+.ask-title { font-size: 1.9rem; margin-bottom: var(--space-xs); }
+.ask-lead { color: var(--color-ink-2); margin-bottom: var(--space-lg); }
+.ask-sub { font-size: 1.3rem; margin: var(--space-xl) 0 var(--space-sm); }
+.ask-small { font-size: 0.95rem; color: var(--color-ink-3); margin-top: var(--space-md); }
+.ask-people { display: grid; gap: var(--space-sm); }
+.ask-person { display: flex; flex-direction: column; gap: var(--space-3xs); padding: var(--space-md) var(--space-lg); border: var(--rule-strong); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-ink); text-decoration: none; transition: background-color var(--dur-fast) var(--ease-out); }
+.ask-person:hover { background: var(--color-paper-3); }
+.ask-person strong { font-size: 1.25rem; }
+.ask-person span { color: var(--color-ink-3); font-size: 1rem; }
+.ask .input { min-height: 48px; font-size: 1.1rem; }
+.ask .field > span { font-size: 1rem; }
+.ask-person-card { display: flex; flex-direction: column; gap: var(--space-2xs); padding: var(--space-md) var(--space-lg); border-radius: var(--radius-md); background: var(--color-accent-soft); margin-bottom: var(--space-lg); }
+.ask-person-card strong { font-family: var(--font-display); font-size: 1.4rem; }
+.ask-person-card a { font-size: 1rem; }
+.ask-log { display: flex; flex-direction: column; gap: var(--space-md); margin-bottom: var(--space-md); }
+.ask-msg { max-width: 92%; padding: var(--space-sm) var(--space-md); border-radius: var(--radius-md); line-height: 1.75; }
+.ask-msg p { margin: 0 0 var(--space-xs); }
+.ask-msg p:last-child, .ask-msg ul:last-child { margin-bottom: 0; }
+.ask-msg ul { margin: 0 0 var(--space-xs); padding-left: 1.2em; }
+.ask-user { align-self: flex-end; background: var(--color-ink); color: var(--color-paper); }
+.ask-model { align-self: flex-start; background: var(--color-surface); border: var(--rule-hair); }
+.ask-model.is-thinking .ask-text { color: var(--color-ink-3); }
+.ask-model.is-error { border-color: var(--color-bad); }
+.ask-speak { margin-top: var(--space-2xs); }
+.ask-chips { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-bottom: var(--space-md); }
+.ask-chip { font: inherit; font-size: 1.05rem; padding: var(--space-xs) var(--space-md); min-height: 44px; border-radius: 999px; border: var(--rule-strong); background: var(--color-surface); color: var(--color-ink); cursor: pointer; }
+.ask-chip:hover { background: var(--color-paper-3); }
+.ask-form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-xs); align-items: end; position: sticky; bottom: 0; background: var(--color-paper); padding: var(--space-sm) 0; }
+.ask-input { resize: vertical; min-height: 56px; }
+.ask-mic, .ask-send { min-height: 56px !important; }
+.ask-mic[data-state="loading"] { background: var(--color-accent); color: var(--color-accent-ink); }
+@media (max-width: 480px) {
+  .ask-form { grid-template-columns: minmax(0, 1fr) auto; }
+  .ask-send { grid-column: 1 / -1; }
+  .ask-msg { max-width: 100%; }
+}
+.ask-brand .brand-logo { width: 36px; height: 36px; }
+.ask-form.no-mic { grid-template-columns: minmax(0, 1fr) auto; }
+@media (max-width: 480px) { .ask-form.no-mic { grid-template-columns: minmax(0, 1fr); } }

@@ -13,3 +13,9 @@ public/data/
 public/charticon.png
 assets-src/
 CONTRIBUTING.md
+
+# secrets
+.env
+.env.*
+!.env.example
+.vercel/
