@@ -5,6 +5,7 @@ import { getUI, setUI, onChange, initSettings } from "./lib/store.js";
 import { DEFAULTS } from "./engine/settings.js";
 import { APP_NAME, APP_NAME_ML } from "./lib/edition.js";
 import { trackScreen } from "./lib/analytics.js";
+import { canLeave } from "./lib/nav-guard.js";
 
 initSettings(DEFAULTS);
 import("./modules/settings.js").then((m) => m.applyTypography());
@@ -85,7 +86,16 @@ async function render() {
     if (my === renderSeq) clear(main).append(h("div.error", String(err.message || err)));
   }
 }
-window.addEventListener("hashchange", render);
+let shownHash = location.hash;
+window.addEventListener("hashchange", () => {
+  // a live call can veto navigation; put the address back and keep the screen as it is
+  if (!canLeave()) {
+    history.replaceState(null, "", shownHash || "#/ask");
+    return;
+  }
+  shownHash = location.hash;
+  render();
+});
 let lastLang = lang();
 onChange((w) => {
   if (w === "ui" && lang() !== lastLang) {

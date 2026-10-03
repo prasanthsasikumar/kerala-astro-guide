@@ -15,6 +15,15 @@ export function render(el) {
   load(out);
 }
 
+function topPlaces(calls) {
+  const n = new Map();
+  for (const c of calls) {
+    const k = c.location ? [c.location.city, c.location.country].filter(Boolean).join(", ") : "";
+    if (k) n.set(k, (n.get(k) || 0) + 1);
+  }
+  return [...n].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => `${k} (${v})`).join(" · ") || "no location data yet";
+}
+
 function login(out) {
   const pw = h("input.input", { type: "password", placeholder: "Admin key", autocomplete: "current-password" });
   out.replaceChildren(h("form.ask-form", { onsubmit: (e) => { e.preventDefault(); setKey(pw.value.trim()); load(out); } },
@@ -32,8 +41,15 @@ async function load(out, cursor = null, acc = []) {
   const total = calls.reduce((s, c) => s + (c.durationSec || 0), 0);
   out.replaceChildren(
     h("p.admin-stats", `${calls.length} calls · ${people.size} people · ${mins(total)} talked · avg ${calls.length ? mins(Math.round(total / calls.length)) : "0:00"}`),
+    h("p.muted", "From: " + topPlaces(calls)),
     ...calls.map(card),
     d.cursor ? h("button.ask-lang", { type: "button", onclick: () => load(out, d.cursor, calls) }, "Load more") : h("p.muted", "That's everything."));
+}
+
+function deviceName(ua = "") {
+  const os = /iPhone|iPad/.test(ua) ? "iPhone/iPad" : /Android/.test(ua) ? "Android" : /Mac OS/.test(ua) ? "Mac" : /Windows/.test(ua) ? "Windows" : "other";
+  const br = /SamsungBrowser/.test(ua) ? "Samsung Internet" : /Edg\//.test(ua) ? "Edge" : /CriOS|Chrome\//.test(ua) ? "Chrome" : /Safari/.test(ua) ? "Safari" : /Firefox/.test(ua) ? "Firefox" : "browser";
+  return `${os} · ${br}`;
 }
 
 function card(c) {
@@ -43,7 +59,8 @@ function card(c) {
     h("summary",
       h("strong", p.name || "—"),
       h("span", ` ${p.gender === "Female" ? "F" : p.gender === "Male" ? "M" : ""} · ${p.date} ${p.timeUnknown ? "(time unknown)" : p.time} · ${(p.place?.name || "").split(",").slice(0, 2).join(",")}`),
-      h("small", `${when.toLocaleString()} · ${mins(c.durationSec || 0)} · ${c.lang} · ${c.star || ""}${c.ended ? "" : " · (in progress or cut off)"}`)),
+      h("small", `${when.toLocaleString()} · ${mins(c.durationSec || 0)} · ${c.lang} · ${c.star || ""}${c.ended ? "" : " · (in progress or cut off)"}`),
+      h("small", "📍 " + (c.location ? [c.location.city, c.location.region, c.location.country].filter(Boolean).join(", ") || "unknown" : "not recorded") + " · " + deviceName(c.device))),
     h("div.admin-transcript", (c.transcript || []).length
       ? c.transcript.map((t) => h("p", { class: t.r === "u" ? "is-user" : "is-astro" }, h("b", t.r === "u" ? "Caller " : "Astrologer "), h("span.muted", mins(t.at || 0) + " "), t.t))
       : h("p.muted", "No transcript.")),

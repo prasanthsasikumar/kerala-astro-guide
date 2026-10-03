@@ -6,6 +6,21 @@ import { verify, json } from "./_lib/session.js";
 
 const MAX_BYTES = 300_000;
 
+function geo(hd) {
+  const g = (k) => {
+    const v = hd.get(k);
+    try { return v ? decodeURIComponent(v) : ""; } catch { return v || ""; }
+  };
+  const lat = parseFloat(g("x-vercel-ip-latitude"));
+  const lon = parseFloat(g("x-vercel-ip-longitude"));
+  return {
+    city: g("x-vercel-ip-city"), region: g("x-vercel-ip-country-region"), country: g("x-vercel-ip-country"),
+    timezone: g("x-vercel-ip-timezone"),
+    // rounded to about 10 km so it stays area-level
+    lat: Number.isFinite(lat) ? Math.round(lat * 10) / 10 : null, lon: Number.isFinite(lon) ? Math.round(lon * 10) / 10 : null,
+  };
+}
+
 export async function handle(request, env = process.env) {
   if (request.method !== "POST") return json(405, { error: "POST only" });
   const raw = await request.text();
@@ -34,6 +49,8 @@ export async function handle(request, env = process.env) {
     star: str(b.star, 60),
     transcript: (Array.isArray(b.transcript) ? b.transcript : []).slice(0, 2000).map((x) => ({ r: x.r === "u" ? "u" : "a", t: str(x.t, 4000), at: +x.at || 0 })),
     device: str(request.headers.get("user-agent"), 200),
+    // approximate location from Vercel's edge (city level); the IP address itself is not stored
+    location: geo(request.headers),
   };
   await put(`calls/${b.id.slice(0, 10)}/${b.id}.json`, JSON.stringify(record), {
     access: "private", addRandomSuffix: false, allowOverwrite: true, contentType: "application/json", token: env.BLOB_READ_WRITE_TOKEN,

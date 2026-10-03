@@ -175,6 +175,11 @@ export class LiveCall {
     tick();
   }
 
+  // a quiet instruction to the astrologer (not spoken by the caller)
+  say(text) {
+    if (this.ws?.readyState === 1) this.ws.send(JSON.stringify({ realtimeInput: { text } }));
+  }
+
   setMuted(m) {
     this.muted = m;
     this.stream?.getAudioTracks().forEach((t) => (t.enabled = !m));

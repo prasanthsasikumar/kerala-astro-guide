@@ -13,6 +13,10 @@ import { NAK_EN, RASI_ML, RASI_EN } from "../../engine/names.js";
 import { APP_NAME_ML, APP_NAME } from "../../lib/edition.js";
 import { track } from "../../lib/analytics.js";
 import { LiveCall } from "./call.js";
+import { setNavGuard, clearNavGuard } from "../../lib/nav-guard.js";
+
+// 5 minutes; a shorter limit can be set for testing on the local dev server only (?limit=40)
+const CALL_LIMIT_SEC = (location.hostname === "127.0.0.1" && +new URLSearchParams(location.hash.split("?")[1]).get("limit")) || 5 * 60;
 
 const ICON = {
   phone: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z"/></svg>',
@@ -180,17 +184,35 @@ async function callScreen(el, input) {
   const dock = h("div.call-dock",
     h("div.call-controls", muteBtn, callBtn, endBtn),
     notice);
-  el.append(stage, dock,
-    h("p.ask-under",
-      input.id ? h("a", { href: `#/ask?edit=${input.id}` }, tx("വിവരങ്ങൾ മാറ്റുക", "Edit details")) : null,
-      input.id ? h("span", "·") : null,
-      h("a", { href: "#/horoscope?" + inputToQuery(input) }, tx("ഗ്രഹനില കാണുക", "See the chart"))));
+  // the chart opens over the call screen, so a call in progress is never interrupted
+  const editLink = input.id ? h("a", { href: `#/ask?edit=${input.id}` }, tx("വിവരങ്ങൾ മാറ്റുക", "Edit details")) : null;
+  const sep = editLink ? h("span", "·") : null;
+  const chartBtn = h("button.ask-textbtn", { type: "button", onclick: () => { track("chart_opened", { in_call: !!call }); openChartSheet(chart, ctx, !!call); } }, tx("ഗ്രഹനില കാണുക", "See the chart"));
+  el.append(stage, dock, h("p.ask-under", editLink, sep, chartBtn));
+  const myHash = location.hash;
 
   let call = null;
   let started = 0;
   let clock = 0;
   let session = null;
   let saveTimer = 0;
+  let limitTimer = 0;
+  // while a call is live, leaving the screen asks first (the call ends only if they agree)
+  const guard = () => {
+    if (!call) return true;
+    const ok = confirm(tx("കോൾ അവസാനിപ്പിക്കട്ടെ?", "End the call?"));
+    if (ok) {
+      const c = call;
+      finish("left_page");
+      c.hangup();
+    }
+    return ok;
+  };
+  const onBeforeUnload = (e) => {
+    if (!call) return;
+    e.preventDefault();
+    e.returnValue = "";
+  };
   const person = () => ({ name: input.name, gender: input.gender, date: input.date, time: input.time, timeUnknown: !!input.timeUnknown, place: input.place });
   const payload = (end) => ({
     ...session, person: person(), star, lang: lang(), startedAt: new Date(started || Date.now()).toISOString(),
@@ -218,9 +240,17 @@ async function callScreen(el, input) {
     muteBtn.hidden = !live || s === "connecting";
     timer.hidden = !live || s === "connecting";
     notice.hidden = live;
-    if (!live) {
+    if (editLink) { editLink.hidden = live; sep.hidden = live; }
+    if (live) {
+      setNavGuard(guard);
+      window.addEventListener("beforeunload", onBeforeUnload);
+    } else {
+      clearNavGuard(guard);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      timer.classList.remove("is-ending");
       clearInterval(clock);
       clearInterval(saveTimer);
+      clearInterval(limitTimer);
       muteBtn.setAttribute("aria-pressed", "false");
       muteBtn.replaceChildren(icon("mic"), h("span", tx("മ്യൂട്ട്", "Mute")));
     }
@@ -256,10 +286,29 @@ async function callScreen(el, input) {
           if (st === "listening" && !started) {
             started = Date.now();
             track("call_connected", { connect_ms: started - t0 });
+            const mmss = (x) => `${Math.floor(x / 60)}:${String(x % 60).padStart(2, "0")}`;
             clock = setInterval(() => {
               const sec = Math.floor((Date.now() - started) / 1000);
-              timer.textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+              const left = Math.max(0, CALL_LIMIT_SEC - sec);
+              // the last minute shows the time remaining
+              timer.classList.toggle("is-ending", left <= 60);
+              timer.textContent = left <= 60 ? tx(`ബാക്കി ${mmss(left)}`, `${mmss(left)} left`) : mmss(sec);
             }, 500);
+            let warned = false;
+            limitTimer = setInterval(() => {
+              const sec = (Date.now() - started) / 1000;
+              if (!warned && sec >= CALL_LIMIT_SEC - 30) {
+                warned = true;
+                call?.say("(This call ends in 30 seconds. Please conclude warmly in one or two sentences and say goodbye.)");
+              }
+              if (sec >= CALL_LIMIT_SEC) {
+                const c = call;
+                finish("time_limit");
+                c?.hangup();
+                setStatus("ended");
+                status.textContent = tx("5 മിനിറ്റ് കഴിഞ്ഞതിനാൽ കോൾ അവസാനിച്ചു. വീണ്ടും വിളിക്കാം.", "The 5-minute call has ended. You can call again.");
+              }
+            }, 1000);
             saveLog(false);
             saveTimer = setInterval(() => saveLog(false), 20000);
           }
@@ -306,6 +355,7 @@ async function callScreen(el, input) {
   const onHide = () => { if (call) { saveLog(true, true); } };
   window.addEventListener("pagehide", onHide);
   const leave = () => {
+    if (location.hash === myHash) return; // navigation was cancelled, the call goes on
     if (call) {
       const c = call;
       finish("left_page");
@@ -315,4 +365,19 @@ async function callScreen(el, input) {
     window.removeEventListener("pagehide", onHide);
   };
   window.addEventListener("hashchange", leave);
+}
+
+// Chart panel over the call screen (a modal sheet; the call keeps running behind it).
+async function openChartSheet(chart, ctx, inCall) {
+  const { render: renderCharts } = await import("../horoscope/tabs/charts.js");
+  const close = h("button.ask-primary.sheet-close", { type: "button" }, tx("അടയ്ക്കുക", "Close"));
+  const dlg = h("dialog.ask-sheet", { "aria-label": tx("ഗ്രഹനില", "Chart") },
+    h("div.sheet-head", h("strong", tx("ഗ്രഹനില", "Chart")), inCall ? h("span.sheet-live", tx("● കോൾ തുടരുന്നു", "● Call continues")) : null),
+    h("div.sheet-body", renderCharts(chart, ctx)),
+    h("div.sheet-foot", close));
+  close.addEventListener("click", () => dlg.close());
+  dlg.addEventListener("close", () => dlg.remove());
+  dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
+  document.body.append(dlg);
+  dlg.showModal();
 }
