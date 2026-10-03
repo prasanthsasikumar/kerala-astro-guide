@@ -4,8 +4,8 @@ import { writeFileSync } from "node:fs";
 const base = process.argv[2] || "https://astro.flowsxr.com/";
 const P = "n=%E0%B4%B2%E0%B4%95%E0%B5%8D%E0%B4%B7%E0%B5%8D%E0%B4%AE%E0%B4%BF&g=F&d=1958-07-21&t=05:40&p=Thiruvalla%2C%20Kerala%2C%20India&la=9.3816&lo=76.5749&tz=5.5";
 const SHOTS = [
-  { file: "ask-start-desktop.png", route: "#/ask", w: 1280, h: 900, mobile: false },
-  { file: "ask-start-mobile.png", route: "#/ask", w: 390, h: 844, mobile: true },
+  { file: "ask-start-desktop.png", route: "#/ask", w: 1280, h: 1000, mobile: false, fill: true },
+  { file: "ask-start-mobile.png", route: "#/ask", w: 390, h: 844, mobile: true, fill: true },
   { file: "ask-call-desktop.png", route: `#/ask?${P}`, w: 1280, h: 900, mobile: false, live: true },
   { file: "ask-call-mobile.png", route: `#/ask?${P}`, w: 390, h: 844, mobile: true, live: true },
   { file: "ask-idle-mobile.png", route: `#/ask?${P}`, w: 390, h: 844, mobile: true },
@@ -31,6 +31,15 @@ for (const s of SHOTS) {
   await send("Emulation.setDeviceMetricsOverride", { width: s.w, height: s.h, deviceScaleFactor: 2, mobile: s.mobile }, sessionId);
   await send("Page.navigate", { url: base + "?r=" + Math.random() + s.route }, sessionId); await sleep(5000);
   if (s.live) { await send("Runtime.evaluate", { expression: LIVE }, sessionId); await sleep(300); }
+  if (s.fill) {
+    await send("Runtime.evaluate", { expression: `(() => { const f = document.querySelector('form'); const [name] = f.querySelectorAll('input[type=text]'); name.value = 'ലക്ഷ്മി';
+      f.querySelector('select').value = 'Female'; f.querySelector('input[type=date]').value = '1958-07-21'; f.querySelector('input[type=time]').value = '05:40';
+      const p = document.querySelector('.combo input'); p.focus(); })()` }, sessionId);
+    await send("Input.insertText", { text: "Thiruvalla" }, sessionId); await sleep(3000);
+    await send("Runtime.evaluate", { expression: `[...document.querySelectorAll('.combo-list li')].find(l => /Thiruvalla|Tiruvalla/.test(l.textContent)).dispatchEvent(new MouseEvent('mousedown', {bubbles:true}))` }, sessionId);
+    await sleep(1200);
+    await send("Runtime.evaluate", { expression: `document.activeElement.blur(); window.scrollTo(0, ${s.mobile ? 330 : 0})` }, sessionId); await sleep(400);
+  }
   const { result } = await send("Page.captureScreenshot", { format: "png" }, sessionId);
   writeFileSync(`docs/screenshots/${s.file}`, Buffer.from(result.data, "base64")); console.log("wrote", s.file);
 }

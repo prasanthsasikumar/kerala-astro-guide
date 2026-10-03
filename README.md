@@ -1,8 +1,9 @@
 # Kerala Astro Guide
 
-A free, open-source web app for Kerala-style (Malayalam) astrological calculations. Everything
-runs in the browser: positions come from the Swiss Ephemeris compiled to WebAssembly, and nothing
-you enter leaves your device.
+A free, open-source web app for Kerala-style (Malayalam) astrology, live at
+**https://astro.flowsxr.com**. All calculations run in your browser: positions come from the Swiss
+Ephemeris compiled to WebAssembly. Data leaves your device only when you search for a place
+(OpenStreetMap) or start a voice call with the astrologer (Google Gemini, see below).
 
 Bilingual interface (Malayalam / English), phone-friendly.
 
@@ -28,6 +29,25 @@ Bilingual interface (Malayalam / English), phone-friendly.
 This edition shows calculations, tables and charts only. It does not include interpretive texts.
 
 ## Talk to the astrologer
+
+**https://astro.flowsxr.com/#/ask**: a simple, large-type screen made for elders.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/ask-start-desktop.png" alt="Enter birth details (desktop)"></td>
+    <td width="50%"><img src="docs/screenshots/ask-call-desktop.png" alt="Voice call in progress (desktop)"></td>
+  </tr>
+  <tr>
+    <td align="center">ജനന വിവരങ്ങൾ: name, date, time, and the place picked by name</td>
+    <td align="center">ജ്യോതിഷിയുമായി സംസാരിക്കുന്നു: the call in progress</td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="docs/screenshots/ask-start-mobile.png" alt="Birth details (phone)" width="260">
+  <img src="docs/screenshots/ask-idle-mobile.png" alt="Ready to call (phone)" width="260">
+  <img src="docs/screenshots/ask-call-mobile.png" alt="Voice call in progress (phone)" width="260">
+</p>
 
 `#/ask` is a simple, large-type screen for elders: pick or enter a person, then press the green
 button for a live voice call with an AI astrologer (Malayalam by default, English optional).
