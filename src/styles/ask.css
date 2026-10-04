@@ -133,19 +133,6 @@
 /* chart sheet over the call */
 .ask-textbtn { font: inherit; font-size: 0.95rem; background: none; border: 0; padding: var(--space-2xs); color: var(--color-accent); text-decoration: underline; cursor: pointer; min-height: 44px; }
 .call-timer.is-ending { color: var(--color-call-red); font-weight: 700; }
-.ask-sheet {
-  width: min(100vw, 640px); max-width: 100vw; max-height: 92dvh; margin: auto auto 0; padding: 0; border: 0;
-  border-radius: 20px 20px 0 0; background: var(--color-paper); color: var(--color-ink); display: flex; flex-direction: column;
-}
-.ask-sheet[open] { display: flex; }
-.ask-sheet::backdrop { background: oklch(0% 0 0 / 0.45); }
-.sheet-head { display: flex; justify-content: space-between; align-items: center; padding: var(--space-md) var(--space-md) var(--space-xs); font-size: 1.2rem; }
-.sheet-live { font-size: 0.9rem; color: var(--color-good); }
-.sheet-body { overflow-y: auto; padding: 0 var(--space-md) var(--space-md); }
-.sheet-body .charts-row > * { max-width: 100%; }
-.sheet-foot { padding: var(--space-sm) var(--space-md) calc(var(--space-sm) + env(safe-area-inset-bottom)); border-top: var(--rule-hair); }
-@media (min-width: 700px) { .ask-sheet { margin: auto; border-radius: 20px; } }
-.ask-sheet:focus, .ask-sheet:focus-visible { outline: none; }
 
 /* optional phone number before a call */
 .phone-field { display: flex; flex-direction: column; gap: 6px; margin: 0 auto var(--space-lg); max-width: 360px; text-align: left; }

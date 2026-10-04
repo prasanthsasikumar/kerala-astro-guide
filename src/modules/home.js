@@ -46,7 +46,7 @@ export function render(el) {
       h("div.section-head", h("h2", bi("ആളുകൾ", "People")), h("a", { href: "#/people" }, bi("എല്ലാം", "All"))),
       chips),
     h("a.row.home-more", { href: "#/more" },
-      biStack("കൂടുതൽ ഉപകരണങ്ങൾ", "More tools · Prashnam, Transits, Date converter, Star match"),
+      biStack("കൂടുതൽ ഉപകരണങ്ങൾ", "More tools", { detail: tx("പ്രശ്നം, ഗോചരം, തീയതി മാറ്റം, നക്ഷത്രപൊരുത്തം", "Prashnam, Transits, Date converter, Star match") }),
       h("span.chev", "›")));
 }
 

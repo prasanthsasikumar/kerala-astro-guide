@@ -8,7 +8,7 @@ import { lang, tx } from "../lib/i18n.js";
 export function order(ml, en) {
   const l = lang();
   if (l === "ml") return [ml, en];
-  if (l === "en") return [en, ml];
+  if (l === "en") return [en, null]; // English mode: English only
   const main = tx(ml, en);
   return [main, main === en ? null : en];
 }
@@ -23,7 +23,8 @@ export function bi(ml, en, tag = "span", vars) {
   return h(tag + ".bi", h("span.bi-main", a), b ? h("span.bi-gloss", " · ", b) : null);
 }
 // stacked: main line, gloss underneath
-export function biStack(ml, en, { mainTag = "strong", cls = "", vars } = {}) {
+export function biStack(ml, en, { mainTag = "strong", cls = "", vars, detail } = {}) {
   const [a, b] = orderf(ml, en, vars);
-  return h("span.bi-stack" + (cls ? "." + cls : ""), h(mainTag + ".bi-main", a), b ? h("span.bi-gloss", b) : null);
+  return h("span.bi-stack" + (cls ? "." + cls : ""), h(mainTag + ".bi-main", a), b ? h("span.bi-gloss", b) : null,
+    detail ? h("span.bi-detail", detail) : null);
 }

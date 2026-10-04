@@ -2,6 +2,7 @@
 // Generated; have native speakers review. Missing keys fall back to English.
 export const DICT = {
   hi: {
+    "Prashnam, Transits, Date converter, Star match": "प्रश्न कुंडली, गोचर, तारीख बदलें, नक्षत्र मिलान",
     "Namaskaram": "नमस्ते",
     " (optional)": " (ज़रूरी नहीं)",
     " · time unknown": " · समय पता नहीं",
@@ -166,6 +167,7 @@ export const DICT = {
     "✓ Remembered on this phone": "✓ इस फ़ोन में याद रखा गया",
   },
   ta: {
+    "Prashnam, Transits, Date converter, Star match": "பிரசன்னம், கோசாரம், தேதி மாற்றம், நட்சத்திரப் பொருத்தம்",
     "Namaskaram": "வணக்கம்",
     " (optional)": " (கட்டாயம் இல்லை)",
     " · time unknown": " · நேரம் தெரியாது",
@@ -330,6 +332,7 @@ export const DICT = {
     "✓ Remembered on this phone": "✓ இந்த போனில் நினைவில் வைக்கப்பட்டது",
   },
   te: {
+    "Prashnam, Transits, Date converter, Star match": "ప్రశ్న జాతకం, గోచారం, తేదీ మార్పు, నక్షత్ర పొంతన",
     "Namaskaram": "నమస్కారం",
     " (optional)": " (తప్పనిసరి కాదు)",
     " · time unknown": " · సమయం తెలియదు",
@@ -494,6 +497,7 @@ export const DICT = {
     "✓ Remembered on this phone": "✓ ఈ ఫోన్‌లో గుర్తుంచుకోబడింది",
   },
   kn: {
+    "Prashnam, Transits, Date converter, Star match": "ಪ್ರಶ್ನೆ ಜಾತಕ, ಗೋಚಾರ, ದಿನಾಂಕ ಬದಲಾವಣೆ, ನಕ್ಷತ್ರ ಹೊಂದಾಣಿಕೆ",
     "Namaskaram": "ನಮಸ್ಕಾರ",
     " (optional)": " (ಕಡ್ಡಾಯವಲ್ಲ)",
     " · time unknown": " · ಸಮಯ ಗೊತ್ತಿಲ್ಲ",

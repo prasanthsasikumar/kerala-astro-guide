@@ -49,7 +49,7 @@ function drawChrome(route) {
   sideNav.replaceChildren(...SIDE.map(([p, ml, en]) =>
     h("a.side-item", { href: "#/" + (p === "home" ? "" : p), "aria-current": active === p ? "page" : null }, biStack(ml, en))));
   sideFoot.replaceChildren(
-    h("a.side-item", { href: "#/settings", "aria-current": active === "settings" ? "page" : null }, biStack("ക്രമീകരണം", "Settings · Ayanamsa, fonts")),
+    h("a.side-item", { href: "#/settings", "aria-current": active === "settings" ? "page" : null }, biStack("ക്രമീകരണം", "Settings")),
     h("div.side-lang", langPill()));
   tabbar.replaceChildren(...TABS.map(([p, ml, en]) =>
     h("a.tab", { href: "#/" + (p === "home" ? "" : p), "aria-current": active === p || (p === "people" && active === "person") ? "page" : null },

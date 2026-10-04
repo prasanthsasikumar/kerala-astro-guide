@@ -270,3 +270,21 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; }
   --font-body: var(--font-script), "Noto Sans Malayalam", system-ui, sans-serif;
   --font-display: var(--font-script-serif), var(--font-script), "Noto Serif Malayalam", Georgia, serif;
 }
+
+/* bottom sheet (global: used on every screen) */
+.ask-sheet {
+  width: min(100vw, 640px); max-width: 100vw; max-height: 92dvh; margin: auto auto 0; padding: 0; border: 0;
+  border-radius: 20px 20px 0 0; background: var(--color-paper); color: var(--color-ink); display: flex; flex-direction: column;
+}
+.ask-sheet[open] { display: flex; }
+.ask-sheet::backdrop { background: oklch(0% 0 0 / 0.45); }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; padding: var(--space-md) var(--space-md) var(--space-xs); font-size: 1.2rem; }
+.sheet-live { font-size: 0.9rem; color: var(--color-good); }
+.sheet-body { overflow-y: auto; padding: 0 var(--space-md) var(--space-md); }
+.sheet-body .charts-row > * { max-width: 100%; }
+.sheet-foot { padding: var(--space-sm) var(--space-md) calc(var(--space-sm) + env(safe-area-inset-bottom)); border-top: var(--rule-hair); }
+@media (min-width: 700px) { .ask-sheet { margin: auto; border-radius: 20px; } }
+.ask-sheet:focus, .ask-sheet:focus-visible { outline: none; }
+.ask-sheet .rows { padding-top: 4px; }
+.ask-sheet .row[aria-current="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); }
+.bi-detail { font-size: 0.85rem; color: var(--color-ink-3); }

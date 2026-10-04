@@ -14,9 +14,9 @@ export function openLangPicker() {
   import("./sheet.js").then(({ openSheet }) => {
     const dlg = openSheet("ഭാഷ · Language", h("div.rows", LANGS.map((l) =>
       h("button.row", {
-        type: "button", "aria-current": l.code === lang() ? "true" : null,
+        type: "button", "aria-current": l.code === lang() ? "true" : null, autofocus: l.code === lang(),
         onclick: () => { dlg.close(); setUI({ lang: l.code }); },
-      }, h("span.bi-stack", h("strong.bi-main", l.name), h("span.bi-gloss", l.en)), l.code === lang() ? h("span.chev", "✓") : h("span")))));
+      }, h("span.bi-stack", h("strong.bi-main", l.name), l.name !== l.en ? h("span.bi-gloss", l.en) : null), l.code === lang() ? h("span.chev", "✓") : h("span")))));
   });
 }
 
