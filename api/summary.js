@@ -1,8 +1,9 @@
 // Short summary of a finished call, in the caller's language, for them to keep or share on WhatsApp.
-// POST { id, sig, lang, name, transcript: [{ r: "u" | "a", t }] } -> { summary }
+// POST { id, sig, lang, name, phone?, optIn?, transcript: [{ r: "u" | "a", t }] } -> { summary, whatsapp }
 // Only signed call sessions, one summary each (a marker blob records that it was made).
 import { put, head } from "@vercel/blob";
 import { verify, json } from "./_lib/session.js";
+import { whatsappEnabled, sendSummary } from "./_lib/whatsapp.js";
 
 const MODEL = process.env.SUMMARY_MODEL || "gemini-flash-latest";
 const LANG_NAME = { ml: "Malayalam", en: "English", hi: "Hindi", ta: "Tamil", te: "Telugu", kn: "Kannada" };
@@ -53,7 +54,13 @@ ${text}`;
   if (env.BLOB_READ_WRITE_TOKEN) {
     await put(marker, "1", { access: "private", addRandomSuffix: false, contentType: "text/plain", token: env.BLOB_READ_WRITE_TOKEN }).catch(() => {});
   }
-  return json(200, { summary });
+  // automatic WhatsApp copy for callers who gave a number and ticked the opt-in
+  let whatsapp = { status: "skipped" };
+  if (b.optIn && b.phone && whatsappEnabled(env)) {
+    whatsapp = await sendSummary(env, { phone: b.phone, lang, summary }).catch((e) => ({ status: "failed", error: String(e?.message || e).slice(0, 200) }));
+  }
+  whatsapp.at = new Date().toISOString();
+  return json(200, { summary, whatsapp });
 }
 
 export function POST(request) {

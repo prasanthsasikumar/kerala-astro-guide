@@ -139,3 +139,52 @@
 .phone-input { min-height: 56px; font-size: 1.15rem; letter-spacing: 0.02em; }
 .phone-hint { font-size: 0.85rem; color: var(--color-ink-3); }
 .phone-hint.is-bad { color: var(--color-bad); }
+
+/* admin usage dashboard */
+.admin-dash { display: flex; flex-direction: column; gap: var(--space-md); margin-bottom: var(--space-xl); }
+.admin-scope { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs) var(--space-sm); }
+.admin-scope p { margin: 0; color: var(--color-ink-2); }
+.admin-scope strong { color: var(--color-ink); }
+.admin-scope-actions, .admin-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
+.admin-actions { margin-top: var(--space-md); }
+.ask-lang.is-strong { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); font-weight: 700; }
+.ask-lang.is-strong:hover { background: var(--color-accent); filter: brightness(1.06); }
+.admin-progress { margin: 0; font-size: 0.95rem; color: var(--color-ink-2); font-family: var(--font-num); }
+.admin-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); }
+.admin-tile, .admin-card { border: var(--rule-strong); border-radius: 16px; background: var(--color-surface); }
+.admin-tile { display: flex; flex-direction: column; gap: 2px; padding: var(--space-sm) var(--space-md); min-width: 0; }
+.admin-tile-v { font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; line-height: 1.2; color: var(--color-ink); font-variant-numeric: tabular-nums; }
+.admin-tile-k { font-size: 0.85rem; color: var(--color-ink-3); }
+.admin-card { padding: var(--space-md); min-width: 0; }
+.admin-card h3 { font-size: 1rem; margin: 0 0 var(--space-sm); }
+.admin-chart-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2xs) var(--space-sm); }
+.admin-legend { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--color-ink-3); }
+.admin-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }
+.admin-legend .k-c { background: var(--color-accent); }
+.admin-legend .k-m { background: var(--color-ink-3); border-radius: 50%; margin-left: 6px; }
+.admin-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.admin-chart .base { stroke: var(--color-rule-strong); }
+.admin-chart .hit { fill: transparent; cursor: pointer; }
+.admin-chart .c { fill: var(--color-accent); }
+.admin-chart .m { fill: var(--color-surface); stroke: var(--color-ink-3); stroke-width: 2; }
+.admin-chart .mline { fill: none; stroke: var(--color-ink-3); stroke-width: 1.5; stroke-dasharray: 3 3; opacity: 0.7; }
+.admin-chart text { font-family: var(--font-num); text-anchor: middle; }
+.admin-chart .n { font-size: 12px; font-weight: 700; fill: var(--color-ink); }
+.admin-chart .d { font-size: 11px; fill: var(--color-ink-3); }
+.admin-chart .cbar:focus { outline: none; }
+.admin-chart .cbar.is-on .hit, .admin-chart .cbar:hover .hit { fill: var(--color-paper-2); }
+.admin-chart-cap { margin: var(--space-xs) 0 0; font-size: 0.9rem !important; color: var(--color-ink-2); }
+.admin-breakdowns { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-sm); }
+.admin-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-sm); }
+.admin-bars li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px var(--space-sm); line-height: 1.3 !important; font-size: 0.95rem !important; }
+.admin-bar-k { overflow-wrap: anywhere; }
+.admin-bar-v { color: var(--color-ink-3); font-family: var(--font-num); font-size: 0.85rem; white-space: nowrap; }
+.admin-bar-track { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--color-paper-3); overflow: hidden; }
+.admin-bar-fill { display: block; height: 100%; border-radius: 3px; background: var(--color-accent); }
+.admin-h { font-size: 1.15rem; margin: 0 0 var(--space-sm) !important; }
+.admin-wa.is-sent { color: var(--color-good) !important; }
+.admin-wa.is-failed { color: var(--color-bad) !important; }
+@media (min-width: 640px) {
+  .admin-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .admin-breakdowns { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+}

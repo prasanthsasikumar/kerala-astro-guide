@@ -6,7 +6,8 @@ import { t, tx, tf, lang, locale } from "../../lib/i18n.js";
 import { listCharts, saveChart, getUI, setUI } from "../../lib/store.js";
 import { getCtx, queryToInput } from "../../lib/ctx.js";
 import { computeChart, dasa, subPeriods } from "../../engine/core.js";
-import { NAK_EN, RASI_ML, RASI_EN } from "../../engine/names.js";
+import { NAK_EN, RASI_EN } from "../../engine/names.js";
+import { nakName, rasiName } from "../../engine/names-i18n.js";
 import { AYANAMSA, HOUSE, NODE } from "../../engine/settings.js";
 import { people, initialOf, hrefFor, rememberPerson } from "../../lib/people.js";
 import { cellsBy } from "../../engine/charts.js";
@@ -79,16 +80,17 @@ function simpleView(chart, ctx, input, openTab) {
   const T = chart.time;
   const P = chart.planets;
   const ML = lang() === "ml";
-  const nk = ML ? db.tblMalayalamNakshatra[T.nakIdx - 1].Name : NAK_EN[T.nakIdx - 1];
-  const sign = (i) => (ML ? RASI_ML[i] : RASI_EN[i]);
+  const EN = lang() === "en";
+  const nk = nakName(T.nakIdx - 1, db);
+  const sign = (i) => rasiName(i);
   const tithi = db.tblThidhi[T.tithi - 1];
   const fact = (ml, en, value, gloss) => h("div.fact", h("span.fact-label", bi(ml, en)), h("strong.fact-value", value), h("span.fact-gloss", gloss));
   const facts = h("div.facts",
-    fact("നക്ഷത്രം", "Star", nk, ML ? `${NAK_EN[T.nakIdx - 1]}, pada ${T.pada}` : `pada ${T.pada}`),
-    fact("കൂറ്", "Moon sign", sign(P.Moon.rasi), ML ? RASI_EN[P.Moon.rasi] : ""),
+    fact("നക്ഷത്രം", "Star", nk, EN ? `pada ${T.pada}` : `${NAK_EN[T.nakIdx - 1]}, pada ${T.pada}`),
+    fact("കൂറ്", "Moon sign", sign(P.Moon.rasi), EN ? "" : RASI_EN[P.Moon.rasi]),
     input.timeUnknown
       ? fact("ലഗ്നം", "Ascendant", "—", tx("സമയം അറിയാതെ കണക്കാക്കാനാവില്ല", "Needs the birth time"))
-      : fact("ലഗ്നം", "Ascendant", sign(P.Lagna.rasi), ML ? RASI_EN[P.Lagna.rasi] : ""),
+      : fact("ലഗ്നം", "Ascendant", sign(P.Lagna.rasi), EN ? "" : RASI_EN[P.Lagna.rasi]),
     fact("തിഥി", "Lunar day", ML ? tithi.Malayalam : tithi.Thidhi, ML ? tithi.Thidhi : ""));
 
   // current dasa and sub-period

@@ -41,7 +41,7 @@ export async function handle(request, env = process.env) {
     startedAt: str(b.startedAt, 40),
     durationSec: Math.max(0, Math.min(24 * 3600, +b.durationSec || 0)),
     ended: !!b.end,
-    lang: b.lang === "en" ? "en" : "ml",
+    lang: ["ml", "en", "hi", "ta", "te", "kn"].includes(b.lang) ? b.lang : "ml",
     person: {
       name: str(p.name), gender: str(p.gender, 10), date: str(p.date, 10), time: str(p.time, 5), timeUnknown: !!p.timeUnknown,
       place: { name: str(p.place?.name), lat: +p.place?.lat || null, lon: +p.place?.lon || null, tz: +p.place?.tz },
@@ -50,6 +50,7 @@ export async function handle(request, env = process.env) {
     // optional: the caller's own number, for an SMS summary (and later sign-in)
     caller: { phone: /^\+?\d{7,15}$/.test(String(b.caller?.phone || "")) ? String(b.caller.phone) : "", whatsappOptIn: !!b.caller?.whatsappOptIn },
     summary: str(b.summary, 2000),
+    whatsapp: b.whatsapp && typeof b.whatsapp === "object" ? { status: str(b.whatsapp.status, 20), at: str(b.whatsapp.at, 40), error: str(b.whatsapp.error, 200) } : null,
     transcript: (Array.isArray(b.transcript) ? b.transcript : []).slice(0, 2000).map((x) => ({ r: x.r === "u" ? "u" : "a", t: str(x.t, 4000), at: +x.at || 0 })),
     device: str(request.headers.get("user-agent"), 200),
     // approximate location from Vercel's edge (city level); the IP address itself is not stored

@@ -5,7 +5,7 @@ import { getCtx } from "../lib/ctx.js";
 import { APP_NAME, APP_NAME_ML } from "../lib/edition.js";
 import { people, initialOf, hrefFor, starOf, lastPerson } from "../lib/people.js";
 import { bi, biStack, order } from "../ui/bi.js";
-import { NAK_EN } from "../engine/names.js";
+import { nakName } from "../engine/names-i18n.js";
 import { langPill } from "../ui/screen.js";
 
 export function render(el) {
@@ -28,7 +28,7 @@ export function render(el) {
     getCtx().then((ctx) => {
       chips.replaceChildren(...list.map((p) => {
         const s = starOf(ctx, p);
-        return chip(p, s ? (lang() === "ml" ? ctx.db.tblMalayalamNakshatra[s - 1].Name : NAK_EN[s - 1]) : "");
+        return chip(p, s ? nakName(s - 1, ctx.db) : "");
       }), chips.lastElementChild);
     });
   }

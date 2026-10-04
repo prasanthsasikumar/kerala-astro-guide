@@ -62,6 +62,10 @@ Environment variables (Vercel project settings, or `.env.local` for `npm run dev
 - `GEMINI_API_KEY` (required)
 - `LIVE_MODEL` (optional, default `gemini-3.8-live`)
 - `LIVE_VOICE` (optional, default `Charon`; any Gemini prebuilt voice)
+- `WHATSAPP_AUTOSEND=1`, `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID` (optional): send each call summary
+  automatically on WhatsApp (Cloud API template `call_summary`, or `WHATSAPP_TEMPLATE`) to callers who
+  gave a number and ticked the opt-in. Create the template once with `node scripts/whatsapp-template.mjs`
+  (needs `WHATSAPP_WABA_ID`); `--status` shows approval, `--hello +91...` sends a test message.
 - `DAILY_CALL_CAP` (optional, default 100): calls allowed per day for everyone (India time); after
   that the app says today's free calls are used up. Counted with marker blobs, so it needs the Blob store.
 - `FAMILY_CODE` (optional): when set, calls only work after opening `/#/ask?k=<FAMILY_CODE>`

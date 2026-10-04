@@ -4,7 +4,7 @@ import { tx, lang } from "../lib/i18n.js";
 import { getCtx } from "../lib/ctx.js";
 import { people, initialOf, hrefFor, starOf } from "../lib/people.js";
 import { bi, biStack } from "../ui/bi.js";
-import { NAK_EN } from "../engine/names.js";
+import { nakName } from "../engine/names-i18n.js";
 import { screenHeader } from "../ui/screen.js";
 
 const fmtDate = (d) => d.split("-").reverse().join("-");
@@ -19,7 +19,7 @@ export function render(el) {
   rows.append(...list.map((p) => row(p, "")));
   if (list.length) getCtx().then((ctx) => rows.replaceChildren(...list.map((p) => {
     const s = starOf(ctx, p);
-    return row(p, s ? (lang() === "ml" ? ctx.db.tblMalayalamNakshatra[s - 1].Name : NAK_EN[s - 1]) : "");
+    return row(p, s ? nakName(s - 1, ctx.db) : "");
   })));
   el.append(
     screenHeader(),

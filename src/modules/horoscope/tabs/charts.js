@@ -2,6 +2,7 @@
 import { h } from "../../../lib/dom.js";
 import { tx, tf, lang } from "../../../lib/i18n.js";
 import * as N from "../../../engine/names.js";
+import { rasiName } from "../../../engine/names-i18n.js";
 import { keralaChart } from "../../../components/kerala-chart.js";
 import { cellsBy, bhavaChartSign, bhavabala, period } from "../../../engine/charts.js";
 import { dasa, dayNum } from "../../../engine/core.js";
@@ -18,7 +19,7 @@ export const EXPLAIN = {
   rasi: (chart) => tf(
     "രാശിചക്രം: 12 കള്ളികൾ 12 രാശികളാണ്, എപ്പോഴും ഒരേ സ്ഥാനത്ത് (മീനം ഇടത്തേ മുകളിൽ, പിന്നെ ഘടികാരദിശയിൽ). ഓരോ ഗ്രഹവും ജനനസമയത്ത് നിന്ന രാശിയിൽ എഴുതിയിരിക്കുന്നു. നിറമുള്ള കള്ളി ലഗ്നമാണ്: ജനനസമയത്ത് കിഴക്ക് ഉദിച്ചുകൊണ്ടിരുന്ന രാശി, ഇവിടെ {lagna}. ചന്ദ്രൻ {moon} രാശിയിലായിരുന്നു, അതിനാൽ കൂറ് {moon}.",
     "Rasi chart: the 12 boxes are the 12 signs, always in the same place (Pisces top-left, then clockwise). Each planet is written in the sign it was in at birth. The shaded box is the Lagna (As), the sign rising in the east at birth, here {lagna}. The Moon was in {moon}, so the Moon sign (koor) is {moon}.",
-    { lagna: N.rasi(chart.planets.Lagna.rasi), moon: N.rasi(chart.planets.Moon.rasi) }),
+    { lagna: rasiName(chart.planets.Lagna.rasi), moon: rasiName(chart.planets.Moon.rasi) }),
   navamsa: () => tx(
     "നവാംശം: ഓരോ രാശിയെയും ഒമ്പതായി ഭാഗിച്ചു നോക്കുന്ന ചക്രം. ഗ്രഹങ്ങളുടെ യഥാർത്ഥ ബലവും വിവാഹകാര്യങ്ങളും നോക്കാൻ ഇത് ഉപയോഗിക്കുന്നു.",
     "Navamsa: each sign divided into nine parts, like zooming in. Astrologers use it to see how strong each planet really is, and for marriage and partnership."),

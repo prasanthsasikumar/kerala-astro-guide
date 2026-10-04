@@ -8,6 +8,7 @@ import { getUI, setUI } from "../../lib/store.js";
 import { getCtx, inputToQuery, queryToInput } from "../../lib/ctx.js";
 import { chartSummary } from "../../engine/chart-summary.js";
 import { NAK_EN, RASI_EN } from "../../engine/names.js";
+import { nakName } from "../../engine/names-i18n.js";
 import { track } from "../../lib/analytics.js";
 import { LiveCall } from "./call.js";
 import { people, initialOf, hrefFor, lastPerson, rememberPerson } from "../../lib/people.js";
@@ -65,7 +66,6 @@ async function callScreen(el, input) {
   const ctx = await getCtx();
   const { text: facts, chart } = chartSummary(ctx, input);
   const T = chart.time;
-  const nakMl = ctx.db.tblMalayalamNakshatra[T.nakIdx - 1].Name;
   const star = `${NAK_EN[T.nakIdx - 1]} / ${RASI_EN[chart.planets.Moon.rasi]}`;
 
   const status = h("p.call-status", { role: "status" }, tx("വിളിക്കാൻ പച്ച ബട്ടൺ അമർത്തുക", "Press the green button to call"));
@@ -79,7 +79,7 @@ async function callScreen(el, input) {
   const stage = h("section.call-stage", { "data-state": "idle" },
     h("div.call-avatar", h("img", { src: "/logo-mark.png", alt: "" })),
     h("h1.call-name", tx("ജ്യോതിഷി", "Astrologer")),
-    h("p.call-about", input.name || "", " · ", tf("{star} നക്ഷത്രം", "{star} star", { star: lang() === "ml" ? nakMl : NAK_EN[T.nakIdx - 1] }),
+    h("p.call-about", input.name || "", " · ", tf("{star} നക്ഷത്രം", "{star} star", { star: nakName(T.nakIdx - 1, ctx.db) }),
       input.timeUnknown ? h("span.call-flag", tx(" · സമയം അറിയില്ല", " · time unknown")) : null),
     status, timer);
   // optional: the caller's number, so a summary can be sent by SMS (kept on this phone too)
@@ -199,13 +199,14 @@ async function callScreen(el, input) {
     try {
       const res = await fetch("/api/summary", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id: snap.body.id, sig: snap.body.sig, lang: lang(), name: input.name, transcript: snap.turns }),
+        body: JSON.stringify({ id: snap.body.id, sig: snap.body.sig, lang: lang(), name: input.name, transcript: snap.turns, phone: getUI().phone || "", optIn: !!getUI().waOptIn }),
       });
       if (!res.ok) throw new Error(String(res.status));
-      const { summary } = await res.json();
+      const { summary, whatsapp } = await res.json();
       summarySlot.replaceChildren(summaryCard(summary));
       track("summary_shown", { lang: lang() });
-      fetch("/api/log", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...snap.body, summary }), keepalive: true }).catch(() => {});
+      if (whatsapp?.status === "sent") track("summary_whatsapp_auto", {});
+      fetch("/api/log", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...snap.body, summary, whatsapp }), keepalive: true }).catch(() => {});
     } catch {
       summarySlot.replaceChildren();
     }
