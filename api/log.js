@@ -48,7 +48,8 @@ export async function handle(request, env = process.env) {
     },
     star: str(b.star, 60),
     // optional: the caller's own number, for an SMS summary (and later sign-in)
-    caller: { phone: /^\+?\d{7,15}$/.test(String(b.caller?.phone || "")) ? String(b.caller.phone) : "" },
+    caller: { phone: /^\+?\d{7,15}$/.test(String(b.caller?.phone || "")) ? String(b.caller.phone) : "", whatsappOptIn: !!b.caller?.whatsappOptIn },
+    summary: str(b.summary, 2000),
     transcript: (Array.isArray(b.transcript) ? b.transcript : []).slice(0, 2000).map((x) => ({ r: x.r === "u" ? "u" : "a", t: str(x.t, 4000), at: +x.at || 0 })),
     device: str(request.headers.get("user-agent"), 200),
     // approximate location from Vercel's edge (city level); the IP address itself is not stored

@@ -61,8 +61,9 @@ function card(c) {
       h("strong", p.name || "—"),
       h("span", ` ${p.gender === "Female" ? "F" : p.gender === "Male" ? "M" : ""} · ${p.date} ${p.timeUnknown ? "(time unknown)" : p.time} · ${(p.place?.name || "").split(",").slice(0, 2).join(",")}`),
       h("small", `${when.toLocaleString()} · ${mins(c.durationSec || 0)} · ${c.lang} · ${c.star || ""}${c.ended ? "" : " · (in progress or cut off)"}`),
-      c.caller?.phone ? h("small", "📞 ", h("a", { href: `tel:${c.caller.phone}` }, c.caller.phone)) : null,
+      c.caller?.phone ? h("small", "📞 ", h("a", { href: `tel:${c.caller.phone}` }, c.caller.phone), c.caller.whatsappOptIn ? " · WhatsApp opt-in ✓" : "") : null,
       h("small", "📍 " + (c.location ? [c.location.city, c.location.region, c.location.country].filter(Boolean).join(", ") || "unknown" : "not recorded") + " · " + deviceName(c.device))),
+    c.summary ? h("p.admin-summary", c.summary) : null,
     h("div.admin-transcript", (c.transcript || []).length
       ? c.transcript.map((t) => h("p", { class: t.r === "u" ? "is-user" : "is-astro" }, h("b", t.r === "u" ? "Caller " : "Astrologer "), h("span.muted", mins(t.at || 0) + " "), t.t))
       : h("p.muted", "No transcript.")),

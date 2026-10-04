@@ -296,3 +296,12 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; }
 .chart-intro p:last-child { margin-bottom: 0; }
 .chart-legend { font-size: 0.9rem; color: var(--color-ink-3); line-height: 1.7; }
 .charts-row { align-items: flex-start; }
+
+/* call summary */
+.summary-slot:empty { display: none; }
+.summary-card { margin: var(--space-lg) auto 0; max-width: 460px; padding: 20px; border-radius: 20px; background: var(--color-surface); border: var(--rule-strong); display: flex; flex-direction: column; gap: 12px; }
+.summary-title { font-family: var(--font-display); font-size: 1.15rem; }
+.summary-text { margin: 0; white-space: pre-line; line-height: 1.7; font-size: 1rem; }
+.wa-btn { background: oklch(55% 0.15 150); }
+.optin { min-height: 48px; font-size: 0.92rem; margin-top: 4px; }
+.admin-summary { white-space: pre-line; background: var(--color-paper-2); border-radius: 10px; padding: 10px 12px; margin: 10px 0 0; font-size: 0.95rem; }

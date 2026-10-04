@@ -89,17 +89,19 @@ async function callScreen(el, input) {
     type: "tel", inputmode: "tel", autocomplete: "tel", value: getUI().phone || "", placeholder: "+91 98765 43210",
     "aria-label": tx("നിങ്ങളുടെ ഫോൺ നമ്പർ", "Your phone number"),
   });
-  const phoneHint = h("span.phone-hint", tx("കോളിന്റെ ചുരുക്കം SMS ആയി അയയ്ക്കാൻ. വേണമെങ്കിൽ മാത്രം.", "To send you a summary by SMS. Optional."));
+  const phoneHint = h("span.phone-hint", tx("കോളിന്റെ ചുരുക്കം WhatsApp-ൽ അയയ്ക്കാൻ. വേണമെങ്കിൽ മാത്രം.", "To send you a call summary on WhatsApp. Optional."));
   phoneInput.addEventListener("change", () => {
     const v = phoneInput.value.trim();
     if (v && !validPhone(v)) { phoneHint.textContent = tx("ശരിയായ നമ്പർ നൽകുക, ഉദാ: +91 98765 43210", "Enter a valid number, e.g. +91 98765 43210"); phoneHint.classList.add("is-bad"); return; }
     phoneHint.classList.remove("is-bad");
-    phoneHint.textContent = v ? tx("✓ ഈ ഫോണിൽ ഓർത്തുവയ്ക്കും", "✓ Remembered on this phone") : tx("കോളിന്റെ ചുരുക്കം SMS ആയി അയയ്ക്കാൻ. വേണമെങ്കിൽ മാത്രം.", "To send you a summary by SMS. Optional.");
+    phoneHint.textContent = v ? tx("✓ ഈ ഫോണിൽ ഓർത്തുവയ്ക്കും", "✓ Remembered on this phone") : tx("കോളിന്റെ ചുരുക്കം WhatsApp-ൽ അയയ്ക്കാൻ. വേണമെങ്കിൽ മാത്രം.", "To send you a call summary on WhatsApp. Optional.");
     setUI({ phone: v ? cleanPhone(v) : "" });
   });
-  const phoneField = h("label.phone-field",
-    h("span.field-label", bi("നിങ്ങളുടെ ഫോൺ നമ്പർ", "Your phone number"), h("span.bi-gloss", tx(" (വേണമെങ്കിൽ)", " (optional)"))),
-    phoneInput, phoneHint);
+  const optIn = h("input", { type: "checkbox", checked: !!getUI().waOptIn, onchange: () => setUI({ waOptIn: optIn.checked }) });
+  const phoneField = h("div.phone-field",
+    h("label", { for: "ask-phone" }, h("span.field-label", bi("നിങ്ങളുടെ ഫോൺ നമ്പർ", "Your phone number"), h("span.bi-gloss", tx(" (വേണമെങ്കിൽ)", " (optional)")))),
+    Object.assign(phoneInput, { id: "ask-phone" }), phoneHint,
+    h("label.check-row.optin", optIn, h("span", tx("കോളിന്റെ ചുരുക്കം WhatsApp-ൽ അയച്ചുതരിക (ലഭ്യമാകുമ്പോൾ)", "Send call summaries to my WhatsApp (when available)"))));
   const dock = h("div.call-dock",
     phoneField,
     h("div.call-controls", muteBtn, callBtn, endBtn),
@@ -108,8 +110,9 @@ async function callScreen(el, input) {
   const editLink = input.id ? h("a", { href: `#/ask?edit=${input.id}` }, tx("വിവരങ്ങൾ മാറ്റുക", "Edit details")) : null;
   const sep = editLink ? h("span", "·") : null;
   const chartBtn = h("button.ask-textbtn", { type: "button", onclick: () => { track("chart_opened", { in_call: !!call }); openChartSheet(chart, ctx, !!call); } }, tx("ഗ്രഹനില കാണുക", "See the chart"));
+  const summarySlot = h("div.summary-slot");
   const support = h("div.support-slot");
-  el.append(stage, dock, support, h("p.ask-under", editLink, sep, chartBtn));
+  el.append(stage, dock, summarySlot, support, h("p.ask-under", editLink, sep, chartBtn));
   const showSupport = (where) => { if (!support.firstChild) { const c = supportCard(where); if (c) support.append(c); } };
   const myHash = location.hash;
 
@@ -137,7 +140,7 @@ async function callScreen(el, input) {
   };
   const person = () => ({ name: input.name, gender: input.gender, date: input.date, time: input.time, timeUnknown: !!input.timeUnknown, place: input.place });
   const payload = (end) => ({
-    ...session, person: person(), star, caller: { phone: getUI().phone || "" }, lang: lang(), startedAt: new Date(started || Date.now()).toISOString(),
+    ...session, person: person(), star, caller: { phone: getUI().phone || "", whatsappOptIn: !!getUI().waOptIn }, lang: lang(), startedAt: new Date(started || Date.now()).toISOString(),
     durationSec: started ? Math.round((Date.now() - started) / 1000) : 0, transcript: call?.transcript || [], end,
   });
   const saveLog = (end = false, beacon = false) => {
@@ -184,9 +187,29 @@ async function callScreen(el, input) {
     const dur = started ? Math.round((Date.now() - started) / 1000) : 0;
     if (started) track("call_end", { duration_sec: dur, reason, turns: call?.transcript?.length || 0 });
     saveLog(true);
+    // a short summary to keep or share, then saved with the call log
+    const snap = { body: payload(true), turns: call?.transcript || [] };
+    if (started && snap.turns.some((x) => x.r === "u")) makeSummary(snap);
     call = null;
     session = null;
   };
+  async function makeSummary(snap) {
+    const wait = h("div.summary-card", h("p.muted", tx("കോളിന്റെ ചുരുക്കം തയ്യാറാക്കുന്നു…", "Preparing a summary of the call…")));
+    summarySlot.replaceChildren(wait);
+    try {
+      const res = await fetch("/api/summary", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: snap.body.id, sig: snap.body.sig, lang: lang(), name: input.name, transcript: snap.turns }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const { summary } = await res.json();
+      summarySlot.replaceChildren(summaryCard(summary));
+      track("summary_shown", { lang: lang() });
+      fetch("/api/log", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...snap.body, summary }), keepalive: true }).catch(() => {});
+    } catch {
+      summarySlot.replaceChildren();
+    }
+  }
 
   callBtn.addEventListener("click", async () => {
     setStatus("connecting");
@@ -303,4 +326,20 @@ async function callScreen(el, input) {
 async function openChartSheet(chart, ctx, inCall) {
   const { render: renderCharts } = await import("../horoscope/tabs/charts.js");
   openSheet(tx("ഗ്രഹനില", "Chart"), renderCharts(chart, ctx), { extraHead: inCall ? h("span.sheet-live", tx("● കോൾ തുടരുന്നു", "● Call continues")) : null });
+}
+
+// The call summary with ways to keep it: WhatsApp (to yourself or family), the phone's share sheet, copy.
+function summaryCard(text) {
+  const copyBtn = h("button.btn-secondary-xl", { type: "button" }, tx("പകർത്തുക", "Copy"));
+  copyBtn.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(text); copyBtn.textContent = tx("✓ പകർത്തി", "✓ Copied"); } catch { /* ignore */ }
+    track("summary_copy", {});
+  });
+  return h("section.summary-card",
+    h("strong.summary-title", tx("കോളിന്റെ ചുരുക്കം", "Summary of the call")),
+    h("p.summary-text", text),
+    h("a.btn-primary-xl.wa-btn", { href: "https://wa.me/?text=" + encodeURIComponent(text), target: "_blank", rel: "noopener", onclick: () => track("summary_whatsapp", {}) },
+      tx("WhatsApp-ൽ സൂക്ഷിക്കുക", "Save to WhatsApp")),
+    "share" in navigator ? h("button.btn-secondary-xl", { type: "button", onclick: () => { track("summary_share", {}); navigator.share({ text }).catch(() => {}); } }, tx("പങ്കിടുക", "Share")) : null,
+    copyBtn);
 }

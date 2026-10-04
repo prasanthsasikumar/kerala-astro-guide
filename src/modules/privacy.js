@@ -8,14 +8,14 @@ const CONTACT = "prasanth@flowsxr.com";
 export function render(el) {
   el.classList.add("ask", "ask-page");
   const ml = [
-    ["എന്താണ് സൂക്ഷിക്കുന്നത്", "ജ്യോതിഷനുമായി വിളിക്കുമ്പോൾ, നിങ്ങൾ നൽകിയ പേര്, ലിംഗം, ജനന തീയതി, സമയം, സ്ഥലം, കൂടാതെ സംഭാഷണത്തിന്റെ എഴുത്തുരൂപവും (ശബ്ദമല്ല), കോളിന്റെ സമയദൈർഘ്യവും, ഏകദേശം ഏത് സ്ഥലത്തുനിന്നാണ് (നഗരം, രാജ്യം) വിളിച്ചതെന്നും, ഏത് തരം ഫോൺ/ബ്രൗസർ എന്നും സൂക്ഷിക്കും. IP വിലാസം സൂക്ഷിക്കില്ല. ഫോൺ നമ്പർ നൽകിയാൽ അതും സൂക്ഷിക്കും (കോളിന്റെ ചുരുക്കം SMS ആയി അയയ്ക്കാൻ; നൽകേണ്ടത് നിർബന്ധമല്ല)."],
+    ["എന്താണ് സൂക്ഷിക്കുന്നത്", "ജ്യോതിഷനുമായി വിളിക്കുമ്പോൾ, നിങ്ങൾ നൽകിയ പേര്, ലിംഗം, ജനന തീയതി, സമയം, സ്ഥലം, കൂടാതെ സംഭാഷണത്തിന്റെ എഴുത്തുരൂപവും (ശബ്ദമല്ല), കോളിന്റെ സമയദൈർഘ്യവും, ഏകദേശം ഏത് സ്ഥലത്തുനിന്നാണ് (നഗരം, രാജ്യം) വിളിച്ചതെന്നും, ഏത് തരം ഫോൺ/ബ്രൗസർ എന്നും സൂക്ഷിക്കും. IP വിലാസം സൂക്ഷിക്കില്ല. ഫോൺ നമ്പർ നൽകിയാൽ അതും സൂക്ഷിക്കും (കോളിന്റെ ചുരുക്കം WhatsApp-ൽ അയയ്ക്കാൻ, നിങ്ങൾ സമ്മതിച്ചാൽ മാത്രം; നൽകേണ്ടത് നിർബന്ധമല്ല). കോളിന്റെ ഒരു ചെറിയ ചുരുക്കവും സൂക്ഷിക്കും."],
     ["എന്തിന്", "സേവനം മെച്ചപ്പെടുത്താനും തെറ്റുകൾ കണ്ടെത്താനും മാത്രം. ഇത് വിൽക്കുകയോ പരസ്യത്തിന് ഉപയോഗിക്കുകയോ ചെയ്യില്ല."],
     ["എവിടെ", "Vercel-ന്റെ സ്വകാര്യ സംഭരണിയിൽ (മുംബൈ). സംഭാഷണം നടക്കുന്നത് Google Gemini വഴിയാണ്. Google Analytics-ൽ പേരോ ജനന വിവരങ്ങളോ ഇല്ലാതെ ഉപയോഗത്തിന്റെ കണക്കുകൾ മാത്രം. സ്ഥലം തിരയുമ്പോൾ ടൈപ്പ് ചെയ്യുന്ന പേര് OpenStreetMap-ലേക്ക് പോകും."],
     ["നിങ്ങളുടെ ഫോണിൽ", "ചേർത്ത ആളുകളുടെ വിവരങ്ങൾ ഈ ഫോണിൽ തന്നെയും സൂക്ഷിക്കും, പിന്നീട് എളുപ്പത്തിൽ വിളിക്കാൻ."],
     ["നീക്കം ചെയ്യാൻ", `നിങ്ങളുടെ വിവരങ്ങൾ നീക്കം ചെയ്യാനോ കാണാനോ ${CONTACT} എന്ന വിലാസത്തിൽ എഴുതുക.`],
   ];
   const en = [
-    ["What is saved", "When you call the astrologer, we save the name, gender, date, time and place of birth you entered, a text transcript of the conversation (not the audio), the call length, the approximate area you called from (city and country) and the type of phone or browser. Your IP address is not stored. If you give your phone number, it is saved too (to send you a call summary by SMS; it is optional)."],
+    ["What is saved", "When you call the astrologer, we save the name, gender, date, time and place of birth you entered, a text transcript of the conversation (not the audio), the call length, the approximate area you called from (city and country) and the type of phone or browser. Your IP address is not stored. If you give your phone number, it is saved too (to send you call summaries on WhatsApp, only if you tick that box; it is optional). A short summary of each call is also saved."],
     ["Why", "Only to improve the service and find problems. It is never sold or used for advertising."],
     ["Where", "In private storage on Vercel (Mumbai region). The conversation itself runs through Google Gemini. Google Analytics receives anonymous usage counts only, never names or birth details. Place searches are sent to OpenStreetMap."],
     ["On your phone", "The people you add are also kept on this phone so you can call again easily."],

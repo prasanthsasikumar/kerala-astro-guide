@@ -42,6 +42,9 @@
     },
     "api/admin.js": {
       "maxDuration": 30
+    },
+    "api/summary.js": {
+      "maxDuration": 30
     }
   }
 }
