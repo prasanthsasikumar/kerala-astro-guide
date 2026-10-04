@@ -10,7 +10,7 @@ import { NAK_EN, RASI_ML, RASI_EN } from "../../engine/names.js";
 import { AYANAMSA, HOUSE, NODE } from "../../engine/settings.js";
 import { people, initialOf, hrefFor, rememberPerson } from "../../lib/people.js";
 import { cellsBy } from "../../engine/charts.js";
-import { chartBox } from "./tabs/charts.js";
+import { chartBox, EXPLAIN, explained } from "./tabs/charts.js";
 import { bi, biStack } from "../../ui/bi.js";
 import { langPill } from "../../ui/screen.js";
 import { openSheet } from "../../ui/sheet.js";
@@ -111,8 +111,10 @@ function simpleView(chart, ctx, input, openTab) {
   const center = h("span", bi("ലഗ്നം", "Lagna"), h("br"), h("strong", input.timeUnknown ? "—" : sign(P.Lagna.rasi)));
   const rasi = chartBox(rasiCells, tx("രാശി", "Rasi"), { mark: input.timeUnknown ? new Set() : new Set([P.Lagna.rasi]), center, size: 520 });
   const enlarge = () => openSheet(tx("രാശിചക്രം", "Rasi chart"), h("div.stack",
-    chartBox(rasiCells, tx("രാശി", "Rasi"), { mark: new Set([P.Lagna.rasi]), center: h("strong", tx("രാശി", "Rasi")), size: 600 }),
-    chartBox(cellsBy(chart, (k) => P[k].navamsa), tx("നവാംശം", "Navamsa"), { mark: new Set([P.Lagna.navamsa]), center: h("strong", tx("നവാംശം", "Navamsa")), size: 600 })));
+    explained(chartBox(rasiCells, tx("രാശി", "Rasi"), { mark: new Set([P.Lagna.rasi]), center: h("strong", tx("രാശി", "Rasi")), size: 600 }), EXPLAIN.rasi(chart)),
+    explained(chartBox(cellsBy(chart, (k) => P[k].navamsa), tx("നവാംശം", "Navamsa"), { mark: new Set([P.Lagna.navamsa]), center: h("strong", tx("നവാംശം", "Navamsa")), size: 600 }), EXPLAIN.navamsa()),
+    input.timeUnknown ? h("p.notice", EXPLAIN.timeUnknown()) : null,
+    h("p.chart-legend", EXPLAIN.legend())));
 
   const go = (tab) => () => openTab(tab);
   const sections = [

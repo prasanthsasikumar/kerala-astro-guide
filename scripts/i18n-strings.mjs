@@ -3,7 +3,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 const FILES = ["src/main.js", "src/modules/home.js", "src/modules/people.js", "src/modules/person-form.js", "src/modules/more.js",
   "src/modules/horoscope/index.js", "src/modules/ask/index.js", "src/modules/settings.js", "src/modules/privacy.js",
-  "src/ui/support.js", "src/ui/screen.js", "src/ui/sheet.js", "src/components/place-picker.js", "src/lib/i18n.js"];
+  "src/ui/support.js", "src/modules/horoscope/tabs/charts.js", "src/ui/screen.js", "src/ui/sheet.js", "src/components/place-picker.js", "src/lib/i18n.js"];
 const out = new Set();
 const lit = String.raw`(?:"((?:[^"\\]|\\.)*)"|\x60((?:[^\x60\\]|\\.)*)\x60)`;
 const re = new RegExp(String.raw`\b(?:tx|tf|bi|biStack|question|both|fact)\(\s*${lit}\s*,\s*${lit}`, "g");

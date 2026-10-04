@@ -288,3 +288,11 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; }
 .ask-sheet .rows { padding-top: 4px; }
 .ask-sheet .row[aria-current="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); }
 .bi-detail { font-size: 0.85rem; color: var(--color-ink-3); }
+
+/* plain-language chart notes */
+.chart-fig { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.chart-note { font-size: 0.95rem; line-height: 1.6; color: var(--color-ink-2); }
+.chart-intro p { margin: 0 0 8px; line-height: 1.65; }
+.chart-intro p:last-child { margin-bottom: 0; }
+.chart-legend { font-size: 0.9rem; color: var(--color-ink-3); line-height: 1.7; }
+.charts-row { align-items: flex-start; }
