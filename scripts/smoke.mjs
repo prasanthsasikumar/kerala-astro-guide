@@ -6,7 +6,7 @@ const B = "n=Test&g=M&d=2018-01-01&t=14:30&p=Calicut&la=11.25&lo=75.77&tz=5.5";
 const routes = [
   ...TABS.map((x) => `#/horoscope?${B}&tab=${x.id}`),
   `#/horoscope?${B.replace("g=M", "g=F")}&tab=yoga`,
-  "#/horoscope", "#/porutham", "#/study", `#/study?${B}`, `#/study?${B}&ready=1`,
+  "#/", "#/home", "#/person?for=ask", "#/horoscope", "#/porutham", "#/study", `#/study?${B}`, `#/study?${B}&ready=1`,
   "#/porutham?fn=A&fd=1995-03-10&ft=06:20&fp=Calicut&fla=11.25&flo=75.77&ftz=5.5&mn=B&md=1992-08-21&mt=22:05&mp=Calicut&mla=11.25&mlo=75.77&mtz=5.5",
   "#/prashnam", "#/prashnam?d=2018-01-01&t=10:15&p=Calicut&la=11.25&lo=75.77&tz=5.5&ar=3&nk=5&tn=37&an=336&sr=2",
   "#/gocharam", "#/gocharam?tab=phalam", "#/panchanga-shuddhi", "#/divasa-panchangam", "#/date-converter", "#/nak-porutham", "#/rasi-pramanam", "#/saved", "#/settings", "#/about",

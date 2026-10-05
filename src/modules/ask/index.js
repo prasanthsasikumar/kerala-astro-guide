@@ -12,6 +12,7 @@ import { nakName } from "../../engine/names-i18n.js";
 import { track } from "../../lib/analytics.js";
 import { LiveCall } from "./call.js";
 import { people, initialOf, hrefFor, lastPerson, rememberPerson } from "../../lib/people.js";
+import { langPill } from "../../ui/screen.js";
 import { bi, biStack } from "../../ui/bi.js";
 import { openSheet } from "../../ui/sheet.js";
 import { supportCard } from "../../ui/support.js";
@@ -58,7 +59,8 @@ function callHeader(input) {
         h("span.left", h("span.avatar.avatar-lg", initialOf(p.name)), h("strong", p.name || "—")), h("span.chev", "›"))),
       h("a.row", { href: "#/person?for=ask", onclick: () => document.querySelector("dialog.ask-sheet")?.close() }, biStack("പുതിയ ആളെ ചേർക്കുക", "Add a person"), h("span.chev", "+"))));
   });
-  return h("header.screen-head", h("a.back-link", { href: "#/" }, "‹ ", bi("ഹോം", "Home")), pill);
+  // this is the front page: logo on the left, whose chart + language on the right, no way off into the other tools
+  return h("header.screen-head.call-head", h("img.brand-logo", { src: "/logo-mark.png", alt: "" }), h("div.call-head-right", pill, langPill()));
 }
 
 // ---------- the call ----------
@@ -103,8 +105,8 @@ async function callScreen(el, input) {
     h("label", { for: "ask-phone" }, h("span.field-label", bi("നിങ്ങളുടെ ഫോൺ നമ്പർ", "Your phone number"), h("span.bi-gloss", tx(" (വേണമെങ്കിൽ)", " (optional)")))),
     Object.assign(phoneInput, { id: "ask-phone" }), phoneHint,
     h("label.check-row.optin", optIn, h("span", tx("കോളിന്റെ ചുരുക്കം WhatsApp-ൽ അയച്ചുതരിക (ലഭ്യമാകുമ്പോൾ)", "Send call summaries to my WhatsApp (when available)"))));
+  // call button right under the astrologer so it is on screen without scrolling; the optional phone number comes after
   const dock = h("div.call-dock",
-    phoneField,
     h("div.call-controls", muteBtn, callBtn, endBtn),
     notice);
   // the chart opens over the call screen, so a call in progress is never interrupted
@@ -114,7 +116,8 @@ async function callScreen(el, input) {
   const studySlot = h("div.study-slot");
   const summarySlot = h("div.summary-slot");
   const support = h("div.support-slot");
-  el.append(stage, dock, studySlot, summarySlot, support, h("p.ask-under", editLink, sep, chartBtn));
+  const toolsLink = h("a.ask-tools", { href: "#/home" }, tx("ജാതകം, വിവാഹപൊരുത്തം, മറ്റ് ഉപകരണങ്ങൾ", "Horoscope, marriage match and other tools ›"));
+  el.append(stage, dock, phoneField, studySlot, summarySlot, support, h("p.ask-under", editLink, sep, chartBtn), toolsLink);
   const showSupport = (where) => {
     if (support.firstChild) return;
     if (where === "after_call") {

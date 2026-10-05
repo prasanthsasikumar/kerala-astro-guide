@@ -33,6 +33,9 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; }
   .shell[data-chrome] .main { padding-bottom: 48px; }
   .tabbar { display: none !important; }
   .legacy-head { display: none; }
+  .shell[data-focus="1"] { grid-template-columns: minmax(0, 1fr); }
+  .shell[data-focus="1"] .sidebar { display: none; }
+  .shell[data-focus="1"] .main { width: 100%; max-width: 640px; margin: 0 auto; }
 }
 .brand { display: flex; align-items: center; gap: 10px; padding: 0 var(--space-sm); text-decoration: none; }
 .brand-logo { width: 32px; height: 32px; flex: none; }
@@ -167,6 +170,9 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; }
   width: 100%; min-height: 60px; padding: 0 20px; border-radius: 16px; border: var(--rule-strong); background: var(--color-surface);
   font: inherit; font-size: 1.25rem; color: var(--color-ink);
 }
+/* iOS Safari sizes date/time inputs to their content and lets them overflow; make them behave like text fields */
+.big-input[type="date"], .big-input[type="time"] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%; text-align: left; }
+.big-input::-webkit-date-and-time-value { text-align: left; }
 .big-input:focus { outline: none; border: 2px solid var(--color-accent); padding: 0 19px; }
 .big-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .big-choice { min-height: 60px; border-radius: 16px; border: var(--rule-strong); background: var(--color-surface); font: inherit; font-size: 1.15rem; color: var(--color-ink); cursor: pointer; }
@@ -325,3 +331,9 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; }
 .study-card h2 { margin: 0 0 6px; font-family: var(--font-display); font-size: 1.3rem; }
 .study-card p { margin: 0 0 var(--space-md); color: var(--color-ink-2); line-height: 1.5; }
 .study-card a.btn-primary-xl { color: var(--color-accent-ink); padding: 0 var(--space-md); text-align: center; }
+/* call flow front page */
+.call-head-right { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.call-head-right .pill { max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.first-intro { margin: var(--space-lg) 0 0; padding: var(--space-md); border-radius: 16px; background: var(--color-accent-soft); color: var(--color-ink-2); line-height: 1.5; }
+.first-intro + .q { margin-top: var(--space-lg); }
+.ask a.ask-tools { display: block; text-align: center; margin: var(--space-lg) auto 0; font-size: 0.95rem; color: var(--color-ink-3); }

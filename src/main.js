@@ -15,12 +15,13 @@ import("./modules/settings.js").then((m) => m.applyTypography());
 import { routes } from "./routes.js";
 
 // Shell: desktop = 240px sidebar; phone = per-screen header + 3-item tab bar (Home · People · Settings).
+// The site opens on the astrologer call (#/ = ask); the other tools live under #/home.
 const SIDE = [
-  ["home", "ഹോം", "Home"],
+  ["ask", "ജ്യോതിഷിയോട് ചോദിക്കാം", "Talk to astrologer"],
+  ["home", "എല്ലാ ഉപകരണങ്ങളും", "All tools"],
   ["horoscope", "ജാതകം", "Horoscope"],
   ["porutham", "വിവാഹപൊരുത്തം", "Marriage match"],
   ["divasa-panchangam", "ഇന്ന്", "Today's panchangam"],
-  ["ask", "ജ്യോതിഷിയോട് ചോദിക്കാം", "Talk to astrologer"],
   ["more", "കൂടുതൽ", "More tools"],
 ];
 const TABS = [["home", "ഹോം", "Home"], ["people", "ആളുകൾ", "People"], ["settings", "ക്രമീകരണം", "Settings"]];
@@ -47,12 +48,12 @@ applyTheme();
 function drawChrome(route) {
   const active = route.nav || route.path;
   sideNav.replaceChildren(...SIDE.map(([p, ml, en]) =>
-    h("a.side-item", { href: "#/" + (p === "home" ? "" : p), "aria-current": active === p ? "page" : null }, biStack(ml, en))));
+    h("a.side-item", { href: "#/" + (p === "ask" ? "" : p), "aria-current": active === p ? "page" : null }, biStack(ml, en))));
   sideFoot.replaceChildren(
     h("a.side-item", { href: "#/settings", "aria-current": active === "settings" ? "page" : null }, biStack("ക്രമീകരണം", "Settings")),
     h("div.side-lang", langPill()));
   tabbar.replaceChildren(...TABS.map(([p, ml, en]) =>
-    h("a.tab", { href: "#/" + (p === "home" ? "" : p), "aria-current": active === p || (p === "people" && active === "person") ? "page" : null },
+    h("a.tab", { href: "#/" + p, "aria-current": active === p || (p === "people" && active === "person") ? "page" : null },
       h("span.tab-pill"), tx(ml, en))));
 }
 
@@ -71,14 +72,16 @@ const isStaleChunk = (err) => /dynamically imported module|Importing a module sc
 
 let renderSeq = 0;
 async function render() {
-  const [path, query] = (location.hash.slice(2) || "home").split("?");
+  const [path, query] = (location.hash.slice(2) || "ask").split("?");
   const params = Object.fromEntries(new URLSearchParams(query || ""));
-  const route = routes.find((r) => r.path === path) || routes.find((r) => r.path === "home");
+  const route = routes.find((r) => r.path === path) || routes.find((r) => r.path === "ask");
   shell.dataset.chrome = route.chrome || "legacy";
+  // the call flow (details form and call screen) has no sidebar either, so nothing distracts from it
+  shell.dataset.focus = route.path === "ask" || (route.path === "person" && params.for === "ask") ? "1" : "";
   drawChrome(route);
   document.documentElement.lang = lang();
   applyLangFont();
-  document.title = route.path === "home" ? `${APP_NAME_ML} · ${APP_NAME}: talk to an astrologer in Malayalam` : `${t(route.label)} · ${APP_NAME}`;
+  document.title = route.path === "ask" ? `${APP_NAME_ML} · ${APP_NAME}: talk to an astrologer in Malayalam` : `${t(route.label)} · ${APP_NAME}`;
   if (route.path !== "admin") trackScreen(route.path, route.label);
   const my = ++renderSeq;
   main.className = "main";
