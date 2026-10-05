@@ -37,6 +37,44 @@ export async function render(el, params) {
   const state = { step: input ? (params.ready ? "q" : "explore") : "intro", qi: 0, answers: {}, consent: !!params.ready, blind: null, choice: null };
   const root = h("div.study");
   el.append(root);
+  // native append prints null as the text "null"; skip empty parts
+  const put = (...parts) => root.append(...parts.filter((x) => x != null && x !== false));
+
+  // The study id comes first, then every answer is saved as soon as it is given (a half-finished study still counts).
+  let studyP = null;
+  const ensureStudy = () => (studyP ||= fetch("/api/survey", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ op: "start" }) })
+    .then((r) => (r.ok ? r.json() : null)).then((d) => d?.study || null).catch(() => null)
+    .then((v) => { if (!v) studyP = null; return v; }));
+  let saving = Promise.resolve(null);
+  const save = (extra = {}) => (saving = saving.then(async () => {
+    const study = await ensureStudy();
+    if (!study) return null;
+    const res = await fetch("/api/survey", {
+      method: "POST", headers: { "content-type": "application/json" }, keepalive: true,
+      body: JSON.stringify({ study, answers: state.answers, lang: lang(), birthYear: +input.date.slice(0, 4), gender: input.gender, ...extra }),
+    });
+    return res.json().catch(() => null);
+  }).catch(() => null));
+
+  // The two blind-test readings take a while to write, so they are prepared in the background from the start;
+  // by question 10 they are ready. Two quiet tries here, one more at question 10 if both failed.
+  let blindP = null;
+  const fetchBlind = async () => {
+    const ctx = await getCtx();
+    const res = await fetch("/api/blindtest", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ lang: lang(), real: blindFacts(ctx, input), decoy: blindFacts(ctx, decoyInput(input)) }),
+    });
+    if (!res.ok) throw new Error(String(res.status));
+    return res.json();
+  };
+  const prepareBlind = () => (blindP = (async () => {
+    for (let i = 0; i < 2; i++) {
+      try { return await fetchBlind(); } catch { await new Promise((r) => setTimeout(r, 2000)); }
+    }
+    return null;
+  })());
+  if (input) prepareBlind();
 
   const draw = () => {
     clear(root);
@@ -52,7 +90,7 @@ export async function render(el, params) {
     const consent = h("input", { type: "checkbox", checked: state.consent, onchange: () => { state.consent = consent.checked; } });
     const err = h("p.form-error", { hidden: true }, tx("തുടരാൻ സമ്മതം അടയാളപ്പെടുത്തുക", "Please tick the consent box to continue"));
     const go = (href) => (e) => { if (!state.consent) { e.preventDefault(); err.hidden = false; return; } track("study_start", {}); location.hash = href; e.preventDefault(); };
-    root.append(
+    put(
       screenHeader({ back: "#/" }),
       h("h1.title", tx("ജ്യോതിഷം ശരിയാണോ? ഒരു ചെറിയ പഠനം", "Is astrology accurate? A small study")),
       h("p.lead", tx("ജാതകമോ ജ്യോതിഷിയുമായുള്ള സംസാരമോ നോക്കിയശേഷം 10 ചെറിയ ചോദ്യങ്ങൾ. ഏകദേശം 3 മിനിറ്റ്. അവസാന ചോദ്യം ഒരു 'blind test' ആണ്: രണ്ട് വിവരണങ്ങളിൽ ഏതാണ് ശരിയായ ആളുടേതെന്ന് കണ്ടെത്തുക.",
@@ -69,7 +107,7 @@ export async function render(el, params) {
   }
 
   function explore() {
-    root.append(
+    put(
       screenHeader({ back: "#/study" }),
       h("h1.title", tx("ആദ്യം ഒന്ന് നോക്കൂ", "First, have a look")),
       h("p.lead", tx(`${input.name || ""} എന്ന ആളുടെ ജാതകം നോക്കുകയോ ജ്യോതിഷിയുമായി സംസാരിക്കുകയോ ചെയ്യുക. തിരികെ വന്ന് ചോദ്യങ്ങൾക്ക് ഉത്തരം നൽകാം.`,
@@ -86,15 +124,18 @@ export async function render(el, params) {
 
   function question() {
     const [id, ml, en, opts] = Q[state.qi];
-    root.append(
+    put(
       h("header.screen-head",
         h("a.back-link", { href: "#", onclick: (e) => { e.preventDefault(); if (state.qi > 0) { state.qi -= 1; draw(); } else { state.step = "explore"; draw(); } } }, "‹ ", tx("തിരികെ", "Back")),
         h("span.step-count", `${state.qi + 1} / 10`)),
       progress(state.qi + 1),
       h("div.q", h("h1", tx(ml, en)), lang() !== "en" ? h("p", en) : null),
+      state.qi === 0 ? h("p.note.study-note", tx("ഉത്തരം നൽകുന്നതിലൂടെ, ഈ ഉത്തരങ്ങൾ ഗവേഷണത്തിനായി പേരില്ലാതെ സൂക്ഷിക്കാൻ നിങ്ങൾ സമ്മതിക്കുന്നു (ജനനവർഷം, ലിംഗം, ഏകദേശ നഗരം മാത്രം). ", "By answering, you agree that your answers are saved anonymously for research (only birth year, gender and rough city). "),
+        h("a", { href: "#/privacy" }, tx("സ്വകാര്യത", "Privacy"))) : null,
       h("div.study-options", opts.map(([v, oml, oen]) =>
         h("button.big-choice.study-choice", { type: "button", "aria-pressed": String(state.answers[id] === v), onclick: () => {
           state.answers[id] = v;
+          save();
           if (state.qi < Q.length - 1) state.qi += 1;
           else state.step = "blind";
           draw();
@@ -103,7 +144,7 @@ export async function render(el, params) {
   }
 
   async function blindTest() {
-    root.append(
+    put(
       h("header.screen-head",
         h("a.back-link", { href: "#", onclick: (e) => { e.preventDefault(); state.step = "q"; state.qi = Q.length - 1; draw(); } }, "‹ ", tx("തിരികെ", "Back")),
         h("span.step-count", "10 / 10")),
@@ -112,17 +153,10 @@ export async function render(el, params) {
         h("p", tx("ഒന്ന് യഥാർത്ഥ ജാതകത്തിൽ നിന്നാണ്, മറ്റേത് ക്രമരഹിതമായി തിരഞ്ഞെടുത്ത മറ്റൊരാളുടെ ജാതകത്തിൽ നിന്നും. ആലോചിച്ച് തിരഞ്ഞെടുക്കുക.",
           "One comes from their real chart, the other from a random person's chart. Read both, then choose."))));
     const box = h("div.blind-box", h("p.muted", tx("രണ്ട് വിവരണങ്ങൾ തയ്യാറാക്കുന്നു…", "Preparing two readings…")));
-    root.append(box);
+    put(box);
     try {
-      if (!state.blind) {
-        const ctx = await getCtx();
-        const res = await fetch("/api/blindtest", {
-          method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ lang: lang(), real: blindFacts(ctx, input), decoy: blindFacts(ctx, decoyInput(input)) }),
-        });
-        if (!res.ok) throw new Error(String(res.status));
-        state.blind = await res.json();
-      }
+      if (!state.blind) state.blind = (await (blindP || prepareBlind())) || (await prepareBlind());
+      if (!state.blind) throw new Error("no readings");
       const card = (k, text) => h("section.blind-card", h("strong", tx(`വിവരണം ${k.toUpperCase()}`, `Reading ${k.toUpperCase()}`)), h("p", text));
       const pick = (v) => () => { state.choice = v; submit(); };
       box.replaceChildren(
@@ -140,23 +174,12 @@ export async function render(el, params) {
 
   async function submit() {
     state.step = "done";
-    try {
-      const res = await fetch("/api/survey", {
-        method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          answers: state.answers, lang: lang(),
-          blind: state.blind && state.choice ? { ticket: state.blind.ticket, choice: state.choice } : null,
-          birthYear: +input.date.slice(0, 4), gender: input.gender,
-        }),
-      });
-      const d = await res.json().catch(() => ({}));
-      state.realIs = d.realIs || null;
-      track("study_done", { blind: state.choice || "none", picked_real: state.realIs ? state.choice === state.realIs : null });
-    } catch {
-      state.realIs = null;
-    }
+    const d = await save({ blind: state.blind && state.choice ? { ticket: state.blind.ticket, choice: state.choice } : null, done: true });
+    state.realIs = d?.realIs || null;
+    track("study_done", { blind: state.choice || "none", picked_real: state.realIs ? state.choice === state.realIs : null });
     draw();
   }
+
 
   function done() {
     let verdict = null;
@@ -168,7 +191,7 @@ export async function render(el, params) {
           ? tx(`ശരിയായ ജാതകത്തിൽ നിന്നുള്ളത് ${r} ആയിരുന്നു.`, `The real chart's reading was ${r}.`)
           : tx(`ശരിയായ ജാതകത്തിൽ നിന്നുള്ളത് ${r} ആയിരുന്നു. നിങ്ങൾ മറ്റേതാണ് തിരഞ്ഞെടുത്തത്.`, `The real chart's reading was ${r}; you picked the other one.`);
     }
-    root.append(
+    put(
       screenHeader({ back: "#/" }),
       h("h1.title", tx("നന്ദി!", "Thank you!")),
       verdict && h("p.study-verdict", verdict),

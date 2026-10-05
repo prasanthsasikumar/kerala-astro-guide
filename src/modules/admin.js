@@ -163,7 +163,8 @@ function studyPanel(rows) {
       ? `People picked their own reading ${pc(hits / picked.length)} of the time, which differs from chance (p = ${p.toFixed(3)}).`
       : `People picked their own reading ${pc(hits / picked.length)} of the time: not distinguishable from chance (p = ${p.toFixed(3)}).`;
   const tiles = [
-    ["Study answers", n],
+    ["Studies started", n],
+    ["Completed", rows.filter((r) => r.complete || r.blind || Object.keys(r.answers || {}).length === 9).length],
     ["Blind-test picks", picked.length],
     ["Picked own reading", picked.length ? `${hits} · ${pc(hits / picked.length)}` : "0"],
     ["95% CI", picked.length ? `${pc(lo)} to ${pc(hi)}` : "n/a"],

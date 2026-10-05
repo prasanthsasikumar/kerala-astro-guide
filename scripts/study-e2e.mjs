@@ -29,7 +29,7 @@ for (let i = 0; i < 9; i++) {
   await ev(`[...document.querySelectorAll('.study-choice')][${i % 3}].click()`); await sleep(400);
   if (i === 4) await shot(`s04-q6-${lang}.png`);
 }
-for (let i = 0; i < 60 && !(await ev(`!!document.querySelector('.blind-card')`)); i++) await sleep(1000);
+const tb = Date.now(); for (let i = 0; i < 60 && !(await ev(`!!document.querySelector('.blind-card')`)); i++) await sleep(250); console.log("readings shown after", ((Date.now() - tb) / 1000).toFixed(1), "s at question 10");
 await shot(`s05-blind-${lang}.png`, true);
 console.log("A:", await ev(`document.querySelectorAll('.blind-card p')[0]?.textContent`));
 console.log("B:", await ev(`document.querySelectorAll('.blind-card p')[1]?.textContent`));

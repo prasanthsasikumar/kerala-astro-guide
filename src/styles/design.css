@@ -337,3 +337,4 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; }
 .first-intro { margin: var(--space-lg) 0 0; padding: var(--space-md); border-radius: 16px; background: var(--color-accent-soft); color: var(--color-ink-2); line-height: 1.5; }
 .first-intro + .q { margin-top: var(--space-lg); }
 .ask a.ask-tools { display: block; text-align: center; margin: var(--space-lg) auto 0; font-size: 0.95rem; color: var(--color-ink-3); }
+.study-note { margin: 0 0 var(--space-md); font-size: 0.9rem; color: var(--color-ink-3); }

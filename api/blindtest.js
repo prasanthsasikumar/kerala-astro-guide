@@ -7,25 +7,57 @@ import { seal } from "./_lib/seal.js";
 import { json } from "./_lib/session.js";
 
 const MODEL = process.env.SUMMARY_MODEL || "gemini-flash-latest";
+const FALLBACK_MODEL = "gemini-flash-lite-latest";
 const LANG_NAME = { ml: "Malayalam", en: "English", hi: "Hindi", ta: "Tamil", te: "Telugu", kn: "Kannada" };
 const hits = new Map();
 
-async function reading(env, facts, lang) {
+async function once(env, facts, lang, model) {
   const prompt = `You are an experienced Kerala astrologer. From the birth chart facts below, describe this person's character and the main themes of their life in 70 to 90 words of simple ${LANG_NAME[lang]} (${LANG_NAME[lang]} script), speaking to them as "you".
 Rules: no names, no numbers, no dates, no ages, and do not mention signs, stars, planets, houses or any astrology words. Be specific to this chart rather than generic, and include one or two mild challenges as well as strengths. Plain text, one paragraph.
 
 Chart facts:
 ${facts}`;
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+    signal: AbortSignal.timeout(20000),
     body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.7, maxOutputTokens: 4096, thinkingConfig: { thinkingBudget: 512 } } }),
   });
   const d = await res.json().catch(() => ({}));
   const cand = d.candidates?.[0];
   const text = cand?.content?.parts?.filter((p) => !p.thought).map((p) => p.text || "").join("").trim();
-  if (!res.ok || !text || cand?.finishReason === "MAX_TOKENS") throw new Error("generation failed");
+  if (!res.ok || !text || cand?.finishReason === "MAX_TOKENS") {
+    throw new Error(`${model} ${res.status} ${cand?.finishReason || "-"} ${d.error?.message || (text ? "" : "empty")}`.trim());
+  }
   return text;
+}
+
+// Hedged: the model usually answers in ~2 s but sometimes stalls for 10 s or fails outright. A second request
+// starts if the first hasn't answered after HEDGE_MS (or failed), a third on a lighter model after that;
+// the first good answer wins.
+const HEDGE_MS = 5000;
+function reading(env, facts, lang) {
+  const plan = [MODEL, MODEL, FALLBACK_MODEL];
+  return new Promise((resolve, reject) => {
+    let started = 0;
+    let failed = 0;
+    let done = false;
+    let timer = 0;
+    const next = () => {
+      clearTimeout(timer);
+      if (done || started >= plan.length) return;
+      const model = plan[started++];
+      once(env, facts, lang, model).then(
+        (text) => { if (!done) { done = true; clearTimeout(timer); resolve(text); } },
+        (e) => {
+          console.error("blindtest attempt failed:", e?.message);
+          if (++failed === plan.length && !done) { done = true; reject(e); } else next();
+        },
+      );
+      timer = setTimeout(next, HEDGE_MS);
+    };
+    next();
+  });
 }
 
 export async function handle(request, env = process.env) {
