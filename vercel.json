@@ -57,6 +57,10 @@
     {
       "source": "/:lang(ml|en|hi|ta|te|kn)",
       "destination": "/index.html"
+    },
+    {
+      "source": "/:lang(ml|en|hi|ta|te|kn)/",
+      "destination": "/index.html"
     }
   ]
 }
