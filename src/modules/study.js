@@ -45,8 +45,10 @@ export async function render(el, params) {
   const ensureStudy = () => (studyP ||= fetch("/api/survey", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ op: "start" }) })
     .then((r) => (r.ok ? r.json() : null)).then((d) => d?.study || null).catch(() => null)
     .then((v) => { if (!v) studyP = null; return v; }));
-  let saving = Promise.resolve(null);
-  const save = (extra = {}) => (saving = saving.then(async () => {
+  // each save sends everything answered so far, so while one is in flight only the newest waiting one matters
+  let inFlight = null;
+  let waiting = null;
+  const send = async (extra) => {
     const study = await ensureStudy();
     if (!study) return null;
     const res = await fetch("/api/survey", {
@@ -54,7 +56,16 @@ export async function render(el, params) {
       body: JSON.stringify({ study, answers: state.answers, lang: lang(), birthYear: +input.date.slice(0, 4), gender: input.gender, ...extra }),
     });
     return res.json().catch(() => null);
-  }).catch(() => null));
+  };
+  const save = (extra = {}) => {
+    if (!inFlight) {
+      inFlight = send(extra).catch(() => null).finally(() => { inFlight = null; });
+      return inFlight;
+    }
+    if (waiting) waiting.extra = { ...waiting.extra, ...extra };
+    else waiting = { extra, p: inFlight.then(() => { const w = waiting; waiting = null; return save(w.extra); }) };
+    return waiting.p;
+  };
 
   // The two blind-test readings take a while to write, so they are prepared in the background from the start;
   // by question 10 they are ready. Two quiet tries here, one more at question 10 if both failed.
@@ -174,6 +185,8 @@ export async function render(el, params) {
 
   async function submit() {
     state.step = "done";
+    clear(root);
+    put(h("p.muted.mt-lg", tx("സൂക്ഷിക്കുന്നു…", "Saving…")));
     const d = await save({ blind: state.blind && state.choice ? { ticket: state.blind.ticket, choice: state.choice } : null, done: true });
     state.realIs = d?.realIs || null;
     track("study_done", { blind: state.choice || "none", picked_real: state.realIs ? state.choice === state.realIs : null });

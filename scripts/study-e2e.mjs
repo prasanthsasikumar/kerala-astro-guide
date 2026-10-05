@@ -33,7 +33,7 @@ const tb = Date.now(); for (let i = 0; i < 60 && !(await ev(`!!document.querySel
 await shot(`s05-blind-${lang}.png`, true);
 console.log("A:", await ev(`document.querySelectorAll('.blind-card p')[0]?.textContent`));
 console.log("B:", await ev(`document.querySelectorAll('.blind-card p')[1]?.textContent`));
-await ev(`document.querySelector('.blind-box .big-choice').click()`); await sleep(3000);
+await ev(`document.querySelector('.blind-box .big-choice').click()`); for (let i = 0; i < 40 && !(await ev(`!!document.querySelector('.study-verdict, .study .title')`)); i++) await sleep(250);
 await shot(`s06-done-${lang}.png`, true);
 console.log("verdict:", await ev(`document.querySelector('.study-verdict')?.textContent`));
 console.log("errors:", await ev(`document.querySelector('.form-error:not([hidden])')?.textContent || 'none'`));
