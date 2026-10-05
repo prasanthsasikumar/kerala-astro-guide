@@ -1,7 +1,12 @@
 import { micConstraints } from "../../lib/autocall.js";
 // Live voice call over the Gemini Live WebSocket API.
 // Mic -> 16 kHz PCM16 -> server; server audio (24 kHz PCM16) -> gapless playback.
-// Barge-in: when the server reports `interrupted`, queued speech is dropped immediately.
+// Barge-in is decided here, not by the server (which stopped for every sneeze, cough or laugh): when the caller
+// talks steadily over the astrologer for BARGE_MS, queued speech is dropped and the rest of that turn is skipped.
+
+const BARGE_LEVEL = 0.12; // mic level (0..1, see meter) that counts as the caller talking
+const BARGE_MS = 1300; // how long they must keep talking; gaps under BARGE_GAP_MS between words are allowed
+const BARGE_GAP_MS = 300;
 
 const WS_URL = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained";
 
@@ -115,8 +120,9 @@ export class LiveCall {
     const sc = msg.serverContent;
     if (sc?.interrupted) this.flush();
     for (const p of sc?.modelTurn?.parts || []) {
-      if (p.inlineData?.data) this.play(p.inlineData.data);
+      if (p.inlineData?.data && !this.skipTurn) this.play(p.inlineData.data);
     }
+    if (sc?.turnComplete || sc?.interrupted) this.skipTurn = false;
     // transcripts are never shown on screen; they are saved to the private call log
     if (sc?.inputTranscription?.text) this.addText("u", sc.inputTranscription.text);
     if (sc?.outputTranscription?.text) this.addText("a", sc.outputTranscription.text);
@@ -167,12 +173,29 @@ export class LiveCall {
       if (this.closed) return;
       const them = level(this.outAnalyser);
       const me = this.muted ? 0 : level(this.inAnalyser);
+      this.bargeIn(me);
       const state = this.sources.size > 0 ? "speaking" : "listening";
       if (state !== last) this.onState?.((last = state));
       this.onLevel?.({ me, them });
       this.raf = requestAnimationFrame(tick);
     };
     tick();
+  }
+
+  // the caller talking over the astrologer: stop only for sustained speech, not a sneeze, cough or laugh
+  bargeIn(me) {
+    const now = performance.now();
+    if (this.sources.size > 0 && me > BARGE_LEVEL) {
+      this.talkSince ||= now;
+      this.lastTalk = now;
+    } else if (this.talkSince && now - this.lastTalk > BARGE_GAP_MS) {
+      this.talkSince = 0;
+    }
+    if (this.talkSince && now - this.talkSince > BARGE_MS && this.sources.size > 0) {
+      this.talkSince = 0;
+      this.flush();
+      this.skipTurn = true; // the server finishes the turn it was saying; the caller doesn't hear the rest
+    }
   }
 
   // a quiet instruction to the astrologer (not spoken by the caller)

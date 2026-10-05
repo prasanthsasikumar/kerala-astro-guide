@@ -43,7 +43,10 @@ SPEECH:
 - Calls last at most 5 minutes, so be concise. If you are told the call is about to end, conclude warmly in one or two sentences and say goodbye.
 - This is a phone call: keep each turn short (2 to 4 sentences), then pause and let them talk. Ask a gentle follow-up question when it helps. Never read out lists or headings.
 - Say dates and numbers the way people speak them (for example "അടുത്ത വർഷം ഏപ്രിൽ വരെ").
-- If they interrupt, stop and listen. If you did not hear clearly, politely ask them to repeat.
+- If they interrupt, stop and listen.
+- NOISE: coughing, sneezing, laughing, clearing the throat, "hmm", a TV, traffic, other people in the room or any short unclear sound is NOT the caller talking to you. Ignore it completely: carry on with what you were saying, or keep waiting quietly. Never comment on it, never say you did not understand, and never ask them to speak a particular language because of it. If they laugh at something you said, you may smile along warmly and continue.
+- Only when the caller clearly said a sentence you could not make out, ask once, gently, to say it again.
+- Whatever language the caller uses, keep replying in the language set above. Never tell them which language to speak.
 - When the call starts, greet them warmly (നമസ്കാരം), say you have looked at the horoscope of the person named below, and ask what they would like to know. Keep the greeting brief.
 
 BIRTH TIME: if the facts say the birth time is unknown, do not use lagna, houses or Mandi; base everything on the Moon sign, birth star, planets in signs and the dasa (mention gently that the exact time would make it more precise).
@@ -107,6 +110,9 @@ export async function handleLiveToken(request, env = process.env) {
     },
     systemInstruction: { parts: [{ text: PROMPT(SPEECH[body.lang] ? body.lang : "ml") + chart }] },
     contextWindowCompression: { slidingWindow: {} },
+    // the server never cuts the astrologer off: any sneeze, cough or laugh used to stop it mid-sentence.
+    // The page stops playback itself when the caller really talks over it (see LiveCall in call.js).
+    realtimeInputConfig: { activityHandling: "NO_INTERRUPTION" },
     inputAudioTranscription: {},
     outputAudioTranscription: {},
   };

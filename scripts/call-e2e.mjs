@@ -2,7 +2,7 @@
 // usage: node scripts/call-e2e.mjs <base-url> '<hash route>' <question.wav> [seconds=45]
 import { spawn } from "node:child_process";
 const [base, route, wav, secs = "45"] = process.argv.slice(2);
-const p = spawn("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", ["--headless=new", "--remote-debugging-port=0", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", `--use-file-for-fake-audio-capture=${wav}`, "--autoplay-policy=no-user-gesture-required", "--user-data-dir=" + (process.env.TMPDIR || "/tmp") + "/ag-call-" + process.pid, "about:blank"]);
+const p = spawn("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", ["--headless=new", "--remote-debugging-port=0", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", `--use-file-for-fake-audio-capture=${wav}`, "--autoplay-policy=no-user-gesture-required", "--mute-audio", "--user-data-dir=" + (process.env.TMPDIR || "/tmp") + "/ag-call-" + process.pid, "about:blank"]);
 const ws = new WebSocket(await new Promise((ok) => p.stderr.on("data", (d) => { const m = String(d).match(/ws:\/\/\S+/); if (m) ok(m[0]); })));
 await new Promise((ok) => (ws.onopen = ok));
 let id = 0; const pend = new Map(); const t0 = Date.now(); const log = [];
