@@ -4,3 +4,5 @@ let guard = null;
 export const setNavGuard = (fn) => { guard = fn; };
 export const clearNavGuard = (fn) => { if (!fn || guard === fn) guard = null; };
 export const canLeave = () => !guard || guard();
+// true while something (a live call) is guarding the screen: it must not be redrawn underneath
+export const isBusy = () => !!guard;

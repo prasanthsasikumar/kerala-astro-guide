@@ -66,7 +66,9 @@ function callHeader(input) {
 // ---------- the call ----------
 async function callScreen(el, input) {
   const armed = takeAutoCall();
-  el.append(callHeader(input));
+  const head = callHeader(input);
+  el.append(head);
+  const langBtn = head.querySelector(".call-head-right > .pill:last-child"); // the call's language is fixed once it starts
   const ctx = await getCtx();
   const { text: facts, chart } = chartSummary(ctx, input);
   const T = chart.time;
@@ -172,6 +174,7 @@ async function callScreen(el, input) {
     muteBtn.hidden = !live || s === "connecting";
     timer.hidden = !live || s === "connecting";
     notice.hidden = live;
+    if (langBtn) langBtn.hidden = live;
     phoneField.hidden = live;
     if (editLink) { editLink.hidden = live; sep.hidden = live; }
     if (live) {

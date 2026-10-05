@@ -6,7 +6,7 @@ import { getUI, onChange, initSettings } from "./lib/store.js";
 import { DEFAULTS } from "./engine/settings.js";
 import { APP_NAME, APP_NAME_ML } from "./lib/edition.js";
 import { trackScreen } from "./lib/analytics.js";
-import { canLeave } from "./lib/nav-guard.js";
+import { canLeave, isBusy } from "./lib/nav-guard.js";
 import { biStack } from "./ui/bi.js";
 import { screenHeader, langPill } from "./ui/screen.js";
 
@@ -116,7 +116,8 @@ let lastLang = lang();
 onChange((w) => {
   if (w !== "ui") return;
   applyTheme();
-  if (lang() !== lastLang) {
+  // never redraw under a live call (it would orphan the call); the new language shows once it ends
+  if (lang() !== lastLang && !isBusy()) {
     lastLang = lang();
     shell.querySelector(".brand-mark").textContent = lang() === "ml" ? APP_NAME_ML : APP_NAME;
     render();
