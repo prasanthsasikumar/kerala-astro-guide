@@ -19,6 +19,7 @@ export const routes = [
   { path: "saved", label: "saved", nav: "people", back: "#/people", load: () => import("./modules/saved.js") },
   { path: "settings", label: "settings", chrome: "tabs", load: () => import("./modules/settings.js") },
   { path: "about", label: "about", nav: "more", load: () => import("./modules/about.js") },
+  { path: "study", label: "study", chrome: "none", load: () => import("./modules/study.js") },
   { path: "privacy", label: "privacy", chrome: "none", load: () => import("./modules/privacy.js") },
   { path: "admin", label: "admin", chrome: "none", load: () => import("./modules/admin.js") },
 ];

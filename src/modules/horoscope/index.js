@@ -16,6 +16,7 @@ import { bi, biStack } from "../../ui/bi.js";
 import { langPill } from "../../ui/screen.js";
 import { openSheet } from "../../ui/sheet.js";
 import { TABS } from "./tabs.js";
+import { studyCard } from "../../ui/study-card.js";
 
 const DASA_EN = { Kethu: "Ketu", Ven: "Venus", Sun: "Sun", Moo: "Moon", Mar: "Mars", Rahu: "Rahu", Jup: "Jupiter", Sat: "Saturn", Mer: "Mercury" };
 const fmtLong = (n) => new Date(n * 864e5).toLocaleDateString(locale(), { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
@@ -134,7 +135,8 @@ function simpleView(chart, ctx, input, openTab) {
       h("button.chart-tap", { type: "button", onclick: enlarge, "aria-label": tx("വലുതാക്കുക", "Enlarge") }, rasi)),
     h("div.rows.mt-lg", sections.map(([ml, en, tab, href]) =>
       href ? h("a.row", { href }, biStack(ml, en, { vars: { name: input.name || "" } }), h("span.chev", "›"))
-        : h("button.row", { type: "button", onclick: go(tab) }, biStack(ml, en), h("span.chev", "›")))));
+        : h("button.row", { type: "button", onclick: go(tab) }, biStack(ml, en), h("span.chev", "›")))),
+    studyCard(hrefFor(input, "study") + "&ready=1", "horoscope"));
 }
 
 // ---------- expert ----------

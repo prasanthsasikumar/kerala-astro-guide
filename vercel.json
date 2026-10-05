@@ -45,6 +45,12 @@
     },
     "api/summary.js": {
       "maxDuration": 30
+    },
+    "api/blindtest.js": {
+      "maxDuration": 30
+    },
+    "api/survey.js": {
+      "maxDuration": 15
     }
   }
 }

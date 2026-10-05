@@ -8,6 +8,7 @@ const L = {
   about: ["വിവരം", "About"],
   ask: ["ജ്യോതിഷനോട് സംസാരിക്കാം", "Talk to the astrologer"],
   privacy: ["സ്വകാര്യത", "Privacy"],
+  study: ["പഠനം", "Study"],
   admin: ["Admin", "Admin"],
   home: ["ഹോം", "Home"],
   people: ["ആളുകൾ", "People"],

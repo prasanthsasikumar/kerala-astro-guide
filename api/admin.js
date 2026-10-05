@@ -31,7 +31,9 @@ export async function handle(request, env = process.env) {
   const url = new URL(request.url);
   const token = env.BLOB_READ_WRITE_TOKEN;
   const limit = Math.max(1, Math.min(MAX_LIMIT, parseInt(url.searchParams.get("limit"), 10) || 50));
-  const page = await list({ prefix: "calls/", limit, cursor: url.searchParams.get("cursor") || undefined, token });
+  // ?kind=survey lists study answers instead of calls (same response shape: { calls, cursor })
+  const prefix = url.searchParams.get("kind") === "survey" ? "survey/" : "calls/";
+  const page = await list({ prefix, limit, cursor: url.searchParams.get("cursor") || undefined, token });
   const blobs = [...page.blobs].sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
   const calls = await mapLimit(blobs, CONCURRENCY, async (bl) => {
     try {

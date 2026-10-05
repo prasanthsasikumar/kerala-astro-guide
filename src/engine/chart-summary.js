@@ -68,3 +68,33 @@ export function chartSummary(ctx, input, now = new Date()) {
   L.push(`Today's star (Moon): ${NAK_EN[tc.time.nakIdx - 1]}.`);
   return { text: L.join("\n"), chart: c };
 }
+
+// Anonymous chart facts for the blind test: planets by sign and house, ascendant, birth star and
+// moon sign only. No name, dates, place, ages, periods or transits, so the two readings cannot be
+// told apart by anything but the chart itself.
+export function blindFacts(ctx, input) {
+  const { swe, db, settings } = ctx;
+  const c = computeChart(swe, db, settings, input);
+  const P = c.planets;
+  const lagna = P.Lagna.rasi;
+  const L = [];
+  if (!input.timeUnknown) L.push(`Ascendant: ${RASI_EN[lagna]}.`);
+  L.push(`Birth star: ${NAK_EN[c.time.nakIdx - 1]}. Moon sign: ${RASI_EN[P.Moon.rasi]}.`);
+  for (const k of ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"]) {
+    const p = P[k];
+    const flags = [p.retro ? "retrograde" : "", p.combust ? "combust" : ""].filter(Boolean).join(", ");
+    L.push(`${k}: ${RASI_EN[p.rasi]}${input.timeUnknown ? "" : `, house ${houseFrom(lagna, p.rasi)}`}${flags ? ", " + flags : ""}.`);
+  }
+  return L.join("\n");
+}
+
+// A random decoy person for the blind test: same gender and place, birth date within 10 years of the real one.
+export function decoyInput(input) {
+  const [y] = input.date.split("-").map(Number);
+  const year = Math.max(1900, Math.min(new Date().getFullYear() - 1, y + Math.floor(Math.random() * 21) - 10));
+  const start = Date.UTC(year, 0, 1);
+  const day = new Date(start + Math.floor(Math.random() * 365) * 864e5);
+  const hh = String(Math.floor(Math.random() * 24)).padStart(2, "0");
+  const mm = String(Math.floor(Math.random() * 60)).padStart(2, "0");
+  return { ...input, name: "", date: day.toISOString().slice(0, 10), time: `${hh}:${mm}` };
+}

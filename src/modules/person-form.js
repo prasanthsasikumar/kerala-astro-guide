@@ -10,7 +10,7 @@ import { hrefFor, rememberPerson } from "../lib/people.js";
 import { bi, orderf } from "../ui/bi.js";
 
 export function render(el, params) {
-  const target = params.for === "ask" ? "ask" : "horoscope";
+  const target = ["ask", "study"].includes(params.for) ? params.for : "horoscope";
   const existing = params.edit ? listCharts().find((c) => c.id === params.edit) : null;
   const v = existing
     ? { ...existing, time: existing.timeUnknown ? "" : existing.time }

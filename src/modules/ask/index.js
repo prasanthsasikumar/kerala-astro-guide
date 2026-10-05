@@ -15,6 +15,7 @@ import { people, initialOf, hrefFor, lastPerson, rememberPerson } from "../../li
 import { bi, biStack } from "../../ui/bi.js";
 import { openSheet } from "../../ui/sheet.js";
 import { supportCard } from "../../ui/support.js";
+import { studyCard } from "../../ui/study-card.js";
 import { setNavGuard, clearNavGuard } from "../../lib/nav-guard.js";
 
 // 5 minutes; a shorter limit can be set for testing on the local dev server only (?limit=40)
@@ -110,10 +111,20 @@ async function callScreen(el, input) {
   const editLink = input.id ? h("a", { href: `#/ask?edit=${input.id}` }, tx("വിവരങ്ങൾ മാറ്റുക", "Edit details")) : null;
   const sep = editLink ? h("span", "·") : null;
   const chartBtn = h("button.ask-textbtn", { type: "button", onclick: () => { track("chart_opened", { in_call: !!call }); openChartSheet(chart, ctx, !!call); } }, tx("ഗ്രഹനില കാണുക", "See the chart"));
+  const studySlot = h("div.study-slot");
   const summarySlot = h("div.summary-slot");
   const support = h("div.support-slot");
-  el.append(stage, dock, summarySlot, support, h("p.ask-under", editLink, sep, chartBtn));
-  const showSupport = (where) => { if (!support.firstChild) { const c = supportCard(where); if (c) support.append(c); } };
+  el.append(stage, dock, studySlot, summarySlot, support, h("p.ask-under", editLink, sep, chartBtn));
+  const showSupport = (where) => {
+    if (support.firstChild) return;
+    if (where === "after_call") {
+      // the study comes first after a call, ahead of the summary and the support card
+      studySlot.replaceChildren(studyCard(hrefFor(input, "study") + "&ready=1", "after_call"));
+      requestAnimationFrame(() => studySlot.scrollIntoView({ behavior: "smooth", block: "center" }));
+    }
+    const c = supportCard(where);
+    if (c) support.append(c);
+  };
   const myHash = location.hash;
 
   let call = null;

@@ -1,0 +1,40 @@
+// Design review screenshots (phone + desktop). usage: node scripts/review-shots.mjs <base> <outdir>
+import { spawn } from "node:child_process";
+import { writeFileSync } from "node:fs";
+const [base, dir] = process.argv.slice(2);
+const p = spawn("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", ["--headless=new", "--hide-scrollbars", "--remote-debugging-port=0", "--user-data-dir=" + (process.env.TMPDIR || "/tmp") + "/ag-rs-" + process.pid, "about:blank"]);
+const ws = new WebSocket(await new Promise((ok) => p.stderr.on("data", (d) => { const m = String(d).match(/ws:\/\/\S+/); if (m) ok(m[0]); })));
+await new Promise((ok) => (ws.onopen = ok));
+let id = 0; const pend = new Map(); const errs = [];
+ws.onmessage = (e) => { const m = JSON.parse(e.data); if (pend.has(m.id)) { pend.get(m.id)(m); pend.delete(m.id); } if (m.method === "Runtime.exceptionThrown") errs.push(m.params.exceptionDetails.exception?.description?.slice(0, 200)); };
+const send = (method, params = {}, sessionId) => new Promise((ok) => { const i = ++id; pend.set(i, ok); ws.send(JSON.stringify({ id: i, method, params, sessionId })); });
+const { result: { targetId } } = await send("Target.createTarget", { url: "about:blank" });
+const { result: { sessionId } } = await send("Target.attachToTarget", { targetId, flatten: true });
+await send("Runtime.enable", {}, sessionId);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const ev = async (x) => (await send("Runtime.evaluate", { expression: x, returnByValue: true }, sessionId)).result.result?.value;
+const size = (w, h, mobile) => send("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: 1, mobile }, sessionId);
+const shot = async (f, full = false) => { const { result } = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: full }, sessionId); writeFileSync(`${dir}/${f}`, Buffer.from(result.data, "base64")); };
+const go = async (route, wait = 3000) => { await send("Page.navigate", { url: base + "?r=" + Math.random() + route }, sessionId); await sleep(wait); };
+const PEOPLE = JSON.stringify([{ id: "a1", name: "ലക്ഷ്മി", gender: "Female", date: "1958-07-21", time: "05:40", place: { name: "Tiruvalla, Kerala, India", lat: 9.3816, lon: 76.5749, tz: 5.5 } }, { id: "a2", name: "Anil", gender: "Male", date: "1985-03-02", time: "21:15", place: { name: "Kochi, Kerala, India", lat: 9.94, lon: 76.26, tz: 5.5 } }, { id: "a3", name: "മീര", gender: "Female", date: "2015-11-30", time: "07:05", place: { name: "Kozhikode, Kerala, India", lat: 11.25, lon: 75.78, tz: 5.5 } }]);
+const L = "n=Lakshmi&g=F&d=1958-07-21&t=05:40&p=Tiruvalla%2C%20Kerala%2C%20India&la=9.3816&lo=76.5749&tz=5.5&id=a1";
+const lang = process.argv[4] || "en";
+await size(390, 844, true);
+await go(`#/`, 2000);
+await ev(`localStorage.setItem('ag.ui', JSON.stringify({lang:'${lang}',theme:'light'}))`);
+await go(`#/study`, 3000); await shot(`s01-intro-${lang}.png`);
+await go(`#/study?${L}`, 3000); await shot(`s02-explore-${lang}.png`);
+await go(`#/study?${L}&ready=1`, 3000); await shot(`s03-q1-${lang}.png`);
+for (let i = 0; i < 9; i++) {
+  await ev(`[...document.querySelectorAll('.study-choice')][${i % 3}].click()`); await sleep(400);
+  if (i === 4) await shot(`s04-q6-${lang}.png`);
+}
+for (let i = 0; i < 60 && !(await ev(`!!document.querySelector('.blind-card')`)); i++) await sleep(1000);
+await shot(`s05-blind-${lang}.png`, true);
+console.log("A:", await ev(`document.querySelectorAll('.blind-card p')[0]?.textContent`));
+console.log("B:", await ev(`document.querySelectorAll('.blind-card p')[1]?.textContent`));
+await ev(`document.querySelector('.blind-box .big-choice').click()`); await sleep(3000);
+await shot(`s06-done-${lang}.png`, true);
+console.log("verdict:", await ev(`document.querySelector('.study-verdict')?.textContent`));
+console.log("errors:", await ev(`document.querySelector('.form-error:not([hidden])')?.textContent || 'none'`));
+p.kill(); process.exit(0);

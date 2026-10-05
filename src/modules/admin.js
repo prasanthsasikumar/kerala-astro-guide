@@ -45,6 +45,7 @@ async function fetchPage(cursor, limit) {
 function start(out) {
   const st = { calls: [], cursor: null, busy: false, progress: "", error: "" };
   const dash = h("section.admin-dash");
+  const studyBox = h("section.admin-study", h("p.muted", "Loading study answers…"));
   const list = h("div.admin-list");
   const foot = h("div.admin-foot");
   out.replaceChildren(h("p.muted", "Loading…"));
@@ -99,9 +100,84 @@ function start(out) {
     } catch (e) {
       if (fail(e)) return;
     }
-    out.replaceChildren(dash, list, foot);
+    out.replaceChildren(studyBox, dash, list, foot);
     paint();
+    loadStudy(studyBox);
   })();
+}
+
+/* ---------- study (blind test + questionnaire) ---------- */
+
+async function loadStudy(box) {
+  const rows = [];
+  let cursor = null;
+  try {
+    do {
+      const q = new URLSearchParams({ kind: "survey", limit: "200" });
+      if (cursor) q.set("cursor", cursor);
+      const r = await fetch("/api/admin?" + q, { headers: { "x-admin-key": getKey() } });
+      if (!r.ok) throw new Error(String(r.status));
+      const d = await r.json();
+      rows.push(...d.calls);
+      cursor = d.cursor;
+    } while (cursor);
+  } catch (e) {
+    box.replaceChildren(h("p.ask-error", "Study answers: " + (e.message || e)));
+    return;
+  }
+  box.replaceChildren(...studyPanel(rows));
+}
+
+// log of the binomial coefficient and an exact two-sided binomial test against p = 0.5
+const lfact = (n) => { let s = 0; for (let i = 2; i <= n; i++) s += Math.log(i); return s; };
+function binomTwoSided(k, n) {
+  if (!n) return 1;
+  const pk = (i) => Math.exp(lfact(n) - lfact(i) - lfact(n - i) - n * Math.LN2);
+  const obs = pk(k);
+  let p = 0;
+  for (let i = 0; i <= n; i++) { const q = pk(i); if (q <= obs * (1 + 1e-9)) p += q; }
+  return Math.min(1, p);
+}
+function wilson(k, n, z = 1.96) {
+  if (!n) return [0, 0];
+  const ph = k / n, d = 1 + (z * z) / n, c = ph + (z * z) / (2 * n), m = z * Math.sqrt((ph * (1 - ph)) / n + (z * z) / (4 * n * n));
+  return [(c - m) / d, (c + m) / d];
+}
+
+const Q_LABELS = {
+  q1: "Whose horoscope", q2: "Age of that person", q3: "Belief before", q4: "What they used", q5: "Horoscope describes them",
+  q6: "Past dasas matched life events", q7: "Astrologer call accuracy", q8: "Voice call usability", q9: "Use again / recommend",
+};
+
+function studyPanel(rows) {
+  const n = rows.length;
+  const blind = rows.filter((r) => r.blind);
+  const picked = blind.filter((r) => r.blind.choice === "a" || r.blind.choice === "b");
+  const hits = picked.filter((r) => r.blind.pickedReal).length;
+  const [lo, hi] = wilson(hits, picked.length);
+  const p = binomTwoSided(hits, picked.length);
+  const pc = (x) => `${Math.round(x * 100)}%`;
+  const verdict = picked.length < 30
+    ? `Too few blind-test picks for a conclusion yet (${picked.length}; aim for 100+).`
+    : p < 0.05
+      ? `People picked their own reading ${pc(hits / picked.length)} of the time, which differs from chance (p = ${p.toFixed(3)}).`
+      : `People picked their own reading ${pc(hits / picked.length)} of the time: not distinguishable from chance (p = ${p.toFixed(3)}).`;
+  const tiles = [
+    ["Study answers", n],
+    ["Blind-test picks", picked.length],
+    ["Picked own reading", picked.length ? `${hits} · ${pc(hits / picked.length)}` : "0"],
+    ["95% CI", picked.length ? `${pc(lo)} to ${pc(hi)}` : "n/a"],
+    ["p vs chance (50%)", picked.length ? p.toFixed(3) : "n/a"],
+    ["Both / neither", `${blind.length - picked.length}`],
+  ];
+  const qs = Object.keys(Q_LABELS).map((k) => [Q_LABELS[k], count(rows.map((r) => r.answers?.[k]).filter(Boolean))]);
+  return [
+    h("h2.admin-h", "Study: is it accurate?"),
+    h("p.admin-verdict", verdict),
+    h("div.admin-tiles", tiles.map(([k, v]) => h("div.admin-tile", h("span.admin-tile-v", String(v)), h("span.admin-tile-k", k)))),
+    h("p.muted", "Blind test: each person sees a reading from their real chart and one from a random chart (same gender and place, birth date within 10 years), in random order. If astrology carries real information, people should pick their own more than 50% of the time."),
+    h("div.admin-breakdowns", qs.map(([title, r]) => breakdown(title, r, n))),
+  ];
 }
 
 /* ---------- dashboard ---------- */
