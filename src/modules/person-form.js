@@ -8,6 +8,7 @@ import { placePicker } from "../components/place-picker.js";
 import { track } from "../lib/analytics.js";
 import { hrefFor, rememberPerson, people } from "../lib/people.js";
 import { langPill } from "../ui/screen.js";
+import { armAutoCall } from "../lib/autocall.js";
 import { bi, orderf } from "../ui/bi.js";
 
 export function render(el, params) {
@@ -56,7 +57,10 @@ export function render(el, params) {
     } else {
       body = [question("{name} ജനിച്ചത് എവിടെ?", "Where was {name} born?", { name: nm() }),
         h("div.form-stack.where", placePicker(v.place, (p) => { v.place = p; })),
-        h("p.note", tx("അക്ഷാംശം, രേഖാംശം, സമയമേഖല എന്നിവ തനിയെ ചേരും.", "Latitude, longitude and time zone fill in automatically."))];
+        h("p.note", tx("അക്ഷാംശം, രേഖാംശം, സമയമേഖല എന്നിവ തനിയെ ചേരും.", "Latitude, longitude and time zone fill in automatically.")),
+        // the call starts as soon as this step is done, so the consent sits here
+        target === "ask" ? h("p.call-consent.form-consent", tx("വിളിക്കുമ്പോൾ, പേരും ജനന വിവരങ്ങളും സംഭാഷണവും സേവനം മെച്ചപ്പെടുത്താനായി സൂക്ഷിക്കും. ", "By calling, you agree that the name, birth details and conversation are saved to improve the service. "),
+          h("a", { href: "#/privacy" }, tx("സ്വകാര്യത", "Privacy"))) : null];
       check = () => (Number.isFinite(v.place?.lat) ? true : fail("ജനിച്ച സ്ഥലം ലിസ്റ്റിൽ നിന്ന് തിരഞ്ഞെടുക്കുക", "Pick the birth place from the list"));
     }
     const isLast = step === 3;
@@ -88,6 +92,7 @@ export function render(el, params) {
     return h("div.q", h("h1", a), b ? h("p", b) : null);
   }
   function finish() {
+    if (target === "ask") armAutoCall(); // still inside the tap: opens the mic so the call can start by itself
     const t = v.timeUnknown ? "12:00" : v.time;
     const place = v.place.tzName ? { ...v.place, tz: tzOffsetAt(v.place.tzName, v.date, t) } : v.place;
     const saved = saveChart({ ...(existing || {}), name: v.name.trim(), gender: v.gender, date: v.date, time: t, timeUnknown: !!v.timeUnknown, place, kind: "birth", star: undefined });

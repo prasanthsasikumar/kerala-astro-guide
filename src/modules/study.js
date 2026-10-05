@@ -159,7 +159,6 @@ export async function render(el, params) {
   }
 
   function done() {
-    const shareText = tx("ജ്യോതിഷം ശരിയാണോ? ഈ ചെറിയ പഠനത്തിൽ പങ്കെടുക്കൂ: ", "Is astrology accurate? Take part in this small study: ") + "https://astro.flowsxr.com/#/study";
     let verdict = null;
     if (state.realIs && state.choice) {
       const r = state.realIs.toUpperCase();
@@ -176,7 +175,6 @@ export async function render(el, params) {
       h("p.lead", tx("ജ്യോതിഷം ശരിക്കും പ്രവർത്തിക്കുന്നുണ്ടെങ്കിൽ, കൂടുതൽ ആളുകളും സ്വന്തം വിവരണം പകുതിയിലേറെ തവണ തിരിച്ചറിയണം. ഒരാളുടെ ഉത്തരം കൊണ്ട് ഒന്നും പറയാനാവില്ല; ധാരാളം ഉത്തരങ്ങൾ ചേരുമ്പോഴാണ് ഉത്തരം കിട്ടുക.",
         "If astrology really works, people should recognise their own reading much more than half the time. One answer says nothing on its own; the result comes from many answers together.")),
       h("div.form-stack.mt-lg",
-        h("a.btn-primary-xl.wa-btn", { href: "https://wa.me/?text=" + encodeURIComponent(shareText), target: "_blank", rel: "noopener" }, tx("WhatsApp-ൽ പങ്കിടുക", "Share on WhatsApp")),
         h("a.btn-secondary-xl", { href: "#/" }, tx("ഹോം", "Home"))));
   }
 

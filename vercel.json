@@ -52,5 +52,11 @@
     "api/survey.js": {
       "maxDuration": 15
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/:lang(ml|en|hi|ta|te|kn)",
+      "destination": "/index.html"
+    }
+  ]
 }

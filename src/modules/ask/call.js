@@ -1,3 +1,4 @@
+import { micConstraints } from "../../lib/autocall.js";
 // Live voice call over the Gemini Live WebSocket API.
 // Mic -> 16 kHz PCM16 -> server; server audio (24 kHz PCM16) -> gapless playback.
 // Barge-in: when the server reports `interrupted`, queued speech is dropped immediately.
@@ -48,12 +49,11 @@ export class LiveCall {
     this.closed = false;
   }
 
-  async start() {
+  // stream: a microphone already opened in the user's tap (see lib/autocall.js), if there is one
+  async start(stream = null) {
     this.onState?.("connecting");
     // microphone: browser echo cancellation is essential for speakerphone barge-in
-    this.stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
-    });
+    this.stream = stream || await navigator.mediaDevices.getUserMedia({ audio: micConstraints });
     this.inCtx = new AudioContext({ sampleRate: 16000 });
     await this.inCtx.audioWorklet.addModule(URL.createObjectURL(new Blob([WORKLET], { type: "text/javascript" })));
     const src = this.inCtx.createMediaStreamSource(this.stream);

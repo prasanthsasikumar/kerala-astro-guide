@@ -66,7 +66,7 @@ export const LANGS = [
   { code: "te", name: "తెలుగు", en: "Telugu", script: "Telugu" },
   { code: "kn", name: "ಕನ್ನಡ", en: "Kannada", script: "Kannada" },
 ];
-export const lang = () => (LANGS.some((l) => l.code === getUI().lang) ? getUI().lang : "ml");
+export const lang = () => (LANGS.some((l) => l.code === getUI().lang) ? getUI().lang : "en");
 export function t(key) {
   const v = L[key];
   if (!v) return key;

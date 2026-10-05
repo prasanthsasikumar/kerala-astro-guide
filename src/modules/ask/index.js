@@ -13,9 +13,9 @@ import { track } from "../../lib/analytics.js";
 import { LiveCall } from "./call.js";
 import { people, initialOf, hrefFor, lastPerson, rememberPerson } from "../../lib/people.js";
 import { langPill } from "../../ui/screen.js";
+import { takeAutoCall } from "../../lib/autocall.js";
 import { bi, biStack } from "../../ui/bi.js";
 import { openSheet } from "../../ui/sheet.js";
-import { supportCard } from "../../ui/support.js";
 import { studyCard } from "../../ui/study-card.js";
 import { setNavGuard, clearNavGuard } from "../../lib/nav-guard.js";
 
@@ -65,6 +65,7 @@ function callHeader(input) {
 
 // ---------- the call ----------
 async function callScreen(el, input) {
+  const armed = takeAutoCall();
   el.append(callHeader(input));
   const ctx = await getCtx();
   const { text: facts, chart } = chartSummary(ctx, input);
@@ -85,26 +86,24 @@ async function callScreen(el, input) {
     h("p.call-about", input.name || "", " · ", tf("{star} നക്ഷത്രം", "{star} star", { star: nakName(T.nakIdx - 1, ctx.db) }),
       input.timeUnknown ? h("span.call-flag", tx(" · സമയം അറിയില്ല", " · time unknown")) : null),
     status, timer);
-  // optional: the caller's number, so a summary can be sent by SMS (kept on this phone too)
+  // optional: the caller's number, kept with the call log so we can get in touch later (kept on this phone too)
   const cleanPhone = (v) => v.replace(/[^\d+]/g, "");
   const validPhone = (v) => /^\+?\d{7,15}$/.test(cleanPhone(v));
   const phoneInput = h("input.big-input.phone-input", {
     type: "tel", inputmode: "tel", autocomplete: "tel", value: getUI().phone || "", placeholder: "+91 98765 43210",
     "aria-label": tx("നിങ്ങളുടെ ഫോൺ നമ്പർ", "Your phone number"),
   });
-  const phoneHint = h("span.phone-hint", tx("കോളിന്റെ ചുരുക്കം WhatsApp-ൽ അയയ്ക്കാൻ. വേണമെങ്കിൽ മാത്രം.", "To send you a call summary on WhatsApp. Optional."));
+  const phoneHint = h("span.phone-hint", tx("വേണമെങ്കിൽ മാത്രം. പിന്നീട് നിങ്ങളെ ബന്ധപ്പെടാൻ.", "Optional. So we can get in touch with you later."));
   phoneInput.addEventListener("change", () => {
     const v = phoneInput.value.trim();
     if (v && !validPhone(v)) { phoneHint.textContent = tx("ശരിയായ നമ്പർ നൽകുക, ഉദാ: +91 98765 43210", "Enter a valid number, e.g. +91 98765 43210"); phoneHint.classList.add("is-bad"); return; }
     phoneHint.classList.remove("is-bad");
-    phoneHint.textContent = v ? tx("✓ ഈ ഫോണിൽ ഓർത്തുവയ്ക്കും", "✓ Remembered on this phone") : tx("കോളിന്റെ ചുരുക്കം WhatsApp-ൽ അയയ്ക്കാൻ. വേണമെങ്കിൽ മാത്രം.", "To send you a call summary on WhatsApp. Optional.");
+    phoneHint.textContent = v ? tx("✓ ഈ ഫോണിൽ ഓർത്തുവയ്ക്കും", "✓ Remembered on this phone") : tx("വേണമെങ്കിൽ മാത്രം. പിന്നീട് നിങ്ങളെ ബന്ധപ്പെടാൻ.", "Optional. So we can get in touch with you later.");
     setUI({ phone: v ? cleanPhone(v) : "" });
   });
-  const optIn = h("input", { type: "checkbox", checked: !!getUI().waOptIn, onchange: () => setUI({ waOptIn: optIn.checked }) });
   const phoneField = h("div.phone-field",
     h("label", { for: "ask-phone" }, h("span.field-label", bi("നിങ്ങളുടെ ഫോൺ നമ്പർ", "Your phone number"), h("span.bi-gloss", tx(" (വേണമെങ്കിൽ)", " (optional)")))),
-    Object.assign(phoneInput, { id: "ask-phone" }), phoneHint,
-    h("label.check-row.optin", optIn, h("span", tx("കോളിന്റെ ചുരുക്കം WhatsApp-ൽ അയച്ചുതരിക (ലഭ്യമാകുമ്പോൾ)", "Send call summaries to my WhatsApp (when available)"))));
+    Object.assign(phoneInput, { id: "ask-phone" }), phoneHint);
   // call button right under the astrologer so it is on screen without scrolling; the optional phone number comes after
   const dock = h("div.call-dock",
     h("div.call-controls", muteBtn, callBtn, endBtn),
@@ -114,19 +113,13 @@ async function callScreen(el, input) {
   const sep = editLink ? h("span", "·") : null;
   const chartBtn = h("button.ask-textbtn", { type: "button", onclick: () => { track("chart_opened", { in_call: !!call }); openChartSheet(chart, ctx, !!call); } }, tx("ഗ്രഹനില കാണുക", "See the chart"));
   const studySlot = h("div.study-slot");
-  const summarySlot = h("div.summary-slot");
-  const support = h("div.support-slot");
   const toolsLink = h("a.ask-tools", { href: "#/home" }, tx("ജാതകം, വിവാഹപൊരുത്തം, മറ്റ് ഉപകരണങ്ങൾ", "Horoscope, marriage match and other tools ›"));
-  el.append(stage, dock, phoneField, studySlot, summarySlot, support, h("p.ask-under", editLink, sep, chartBtn), toolsLink);
-  const showSupport = (where) => {
-    if (support.firstChild) return;
-    if (where === "after_call") {
-      // the study comes first after a call, ahead of the summary and the support card
-      studySlot.replaceChildren(studyCard(hrefFor(input, "study") + "&ready=1", "after_call"));
-      requestAnimationFrame(() => studySlot.scrollIntoView({ behavior: "smooth", block: "center" }));
-    }
-    const c = supportCard(where);
-    if (c) support.append(c);
+  el.append(stage, dock, phoneField, studySlot, h("p.ask-under", editLink, sep, chartBtn), toolsLink);
+  // after a call: the 10 study questions
+  const showStudy = () => {
+    if (studySlot.firstChild) return;
+    studySlot.replaceChildren(studyCard(hrefFor(input, "study") + "&ready=1", "after_call"));
+    requestAnimationFrame(() => studySlot.scrollIntoView({ behavior: "smooth", block: "center" }));
   };
   const myHash = location.hash;
 
@@ -154,7 +147,7 @@ async function callScreen(el, input) {
   };
   const person = () => ({ name: input.name, gender: input.gender, date: input.date, time: input.time, timeUnknown: !!input.timeUnknown, place: input.place });
   const payload = (end) => ({
-    ...session, person: person(), star, caller: { phone: getUI().phone || "", whatsappOptIn: !!getUI().waOptIn }, lang: lang(), startedAt: new Date(started || Date.now()).toISOString(),
+    ...session, person: person(), star, caller: { phone: getUI().phone || "" }, lang: lang(), startedAt: new Date(started || Date.now()).toISOString(),
     durationSec: started ? Math.round((Date.now() - started) / 1000) : 0, transcript: call?.transcript || [], end,
   });
   const saveLog = (end = false, beacon = false) => {
@@ -197,39 +190,18 @@ async function callScreen(el, input) {
   };
   const finish = (reason) => {
     if (!call && !session) return;
-    if (started) showSupport("after_call");
+    if (started) showStudy();
     const dur = started ? Math.round((Date.now() - started) / 1000) : 0;
     if (started) track("call_end", { duration_sec: dur, reason, turns: call?.transcript?.length || 0 });
     saveLog(true);
-    // a short summary to keep or share, then saved with the call log
-    const snap = { body: payload(true), turns: call?.transcript || [] };
-    if (started && snap.turns.some((x) => x.r === "u")) makeSummary(snap);
     call = null;
     session = null;
   };
-  async function makeSummary(snap) {
-    const wait = h("div.summary-card", h("p.muted", tx("കോളിന്റെ ചുരുക്കം തയ്യാറാക്കുന്നു…", "Preparing a summary of the call…")));
-    summarySlot.replaceChildren(wait);
-    try {
-      const res = await fetch("/api/summary", {
-        method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id: snap.body.id, sig: snap.body.sig, lang: lang(), name: input.name, transcript: snap.turns, phone: getUI().phone || "", optIn: !!getUI().waOptIn }),
-      });
-      if (!res.ok) throw new Error(String(res.status));
-      const { summary, whatsapp } = await res.json();
-      summarySlot.replaceChildren(summaryCard(summary));
-      track("summary_shown", { lang: lang() });
-      if (whatsapp?.status === "sent") track("summary_whatsapp_auto", {});
-      fetch("/api/log", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...snap.body, summary, whatsapp }), keepalive: true }).catch(() => {});
-    } catch {
-      summarySlot.replaceChildren();
-    }
-  }
-
-  callBtn.addEventListener("click", async () => {
+  // stream: the mic opened in the details form's last tap, when the call starts by itself
+  const startCall = async (stream = null, auto = false) => {
     setStatus("connecting");
     if (phoneInput.value.trim() && validPhone(phoneInput.value)) setUI({ phone: cleanPhone(phoneInput.value) });
-    track("call_start", { lang: lang(), time_unknown: !!input.timeUnknown, phone_given: !!getUI().phone });
+    track("call_start", { lang: lang(), time_unknown: !!input.timeUnknown, phone_given: !!getUI().phone, auto });
     const t0 = Date.now();
     started = 0;
     try {
@@ -241,7 +213,6 @@ async function callScreen(el, input) {
       if (res.status === 429) {
         const why = (await res.json().catch(() => ({}))).error;
         if (why === "daily_cap") {
-          showSupport("daily_cap");
           throw Object.assign(new Error(tx("ഇന്നത്തെ സൗജന്യ കോളുകൾ കഴിഞ്ഞു. നാളെ വീണ്ടും വിളിക്കൂ.", "Today's free calls are used up. Please call again tomorrow.")), { code: "daily_cap" });
         }
         throw Object.assign(new Error(tx("ഒരുപാട് കോളുകൾ ആയി. കുറച്ചു കഴിഞ്ഞ് വിളിക്കുക.", "Too many calls. Please try again later.")), { code: "rate_limited" });
@@ -295,10 +266,11 @@ async function callScreen(el, input) {
         },
         onError: (err) => console.warn("call", err),
       });
-      await call.start();
+      await call.start(stream);
     } catch (err) {
       const denied = err?.name === "NotAllowedError" || err?.name === "SecurityError";
       track("call_error", { reason: denied ? "mic_denied" : err?.code || "connect_failed" });
+      stream?.getTracks().forEach((t) => t.stop()); // a mic opened for an automatic start, if the call never got it
       call?.hangup();
       finish("error");
       setStatus("error");
@@ -306,7 +278,10 @@ async function callScreen(el, input) {
         ? tx("മൈക്രോഫോൺ അനുവദിക്കണം. ബ്രൗസറിലെ ക്രമീകരണങ്ങളിൽ മൈക്രോഫോൺ അനുമതി നൽകുക.", "Please allow the microphone in your browser settings.")
         : err.message || String(err);
     }
-  });
+  };
+  callBtn.addEventListener("click", () => startCall());
+  // arriving from the details form: the call starts by itself (a denied mic shows the usual message)
+  if (armed) armed.then((stream) => { if (location.hash === myHash) startCall(stream, true); else stream?.getTracks().forEach((t) => t.stop()); });
   endBtn.addEventListener("click", () => {
     const c = call;
     finish("hangup");
@@ -341,20 +316,4 @@ async function callScreen(el, input) {
 async function openChartSheet(chart, ctx, inCall) {
   const { render: renderCharts } = await import("../horoscope/tabs/charts.js");
   openSheet(tx("ഗ്രഹനില", "Chart"), renderCharts(chart, ctx), { extraHead: inCall ? h("span.sheet-live", tx("● കോൾ തുടരുന്നു", "● Call continues")) : null });
-}
-
-// The call summary with ways to keep it: WhatsApp (to yourself or family), the phone's share sheet, copy.
-function summaryCard(text) {
-  const copyBtn = h("button.btn-secondary-xl", { type: "button" }, tx("പകർത്തുക", "Copy"));
-  copyBtn.addEventListener("click", async () => {
-    try { await navigator.clipboard.writeText(text); copyBtn.textContent = tx("✓ പകർത്തി", "✓ Copied"); } catch { /* ignore */ }
-    track("summary_copy", {});
-  });
-  return h("section.summary-card",
-    h("strong.summary-title", tx("കോളിന്റെ ചുരുക്കം", "Summary of the call")),
-    h("p.summary-text", text),
-    h("a.btn-primary-xl.wa-btn", { href: "https://wa.me/?text=" + encodeURIComponent(text), target: "_blank", rel: "noopener", onclick: () => track("summary_whatsapp", {}) },
-      tx("WhatsApp-ൽ സൂക്ഷിക്കുക", "Save to WhatsApp")),
-    "share" in navigator ? h("button.btn-secondary-xl", { type: "button", onclick: () => { track("summary_share", {}); navigator.share({ text }).catch(() => {}); } }, tx("പങ്കിടുക", "Share")) : null,
-    copyBtn);
 }
