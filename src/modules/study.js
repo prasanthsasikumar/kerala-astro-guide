@@ -125,7 +125,7 @@ export async function render(el, params) {
         `Look at ${input.name || "this person"}'s horoscope or talk to the astrologer, then come back here for the questions.`)),
       h("div.rows",
         h("a.row", { href: hrefFor(input, "horoscope") }, biStack("ജാതകം കാണുക", "See the horoscope"), h("span.chev", "›")),
-        h("a.row", { href: hrefFor(input, "ask") }, biStack("ജ്യോതിഷിയോട് സംസാരിക്കുക", "Talk to the astrologer (up to 5 minutes)"), h("span.chev", "›"))),
+        h("a.row", { href: hrefFor(input, "ask") }, biStack("ജ്യോതിഷിയോട് സംസാരിക്കുക", "Talk to the astrologer (up to 10 minutes)"), h("span.chev", "›"))),
       h("div.bottom-bar", h("button.btn-primary-xl", { type: "button", onclick: () => { state.step = "q"; draw(); } }, tx("ചോദ്യങ്ങൾ തുടങ്ങാം", "Start the questions"))));
   }
 

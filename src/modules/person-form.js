@@ -36,8 +36,8 @@ export function render(el, params) {
       const choices = [["Male", "പുരുഷൻ", "Male"], ["Female", "സ്ത്രീ", "Female"]].map(([val, ml, en]) =>
         h("button.big-choice", { type: "button", "aria-pressed": String(v.gender === val), onclick: (e) => { v.gender = val; choices.forEach((b) => b.setAttribute("aria-pressed", String(b === e.currentTarget))); } }, bi(ml, en)));
       name.addEventListener("input", () => { v.name = name.value; });
-      body = [firstVisit ? h("p.first-intro", tx("ജാതകം നോക്കി ജ്യോതിഷി ഫോണിൽ എന്നപോലെ സംസാരിക്കും. സൗജന്യം, 5 മിനിറ്റ് വരെ. ആദ്യം ജനന വിവരങ്ങൾ.",
-          "An astrologer reads the horoscope and talks with you, like a phone call. Free, up to 5 minutes. First, the birth details.")) : null,
+      body = [firstVisit ? h("p.first-intro", tx("ജാതകം നോക്കി ജ്യോതിഷി ഫോണിൽ എന്നപോലെ സംസാരിക്കും. സൗജന്യം, 10 മിനിറ്റ് വരെ. ആദ്യം ജനന വിവരങ്ങൾ.",
+          "An astrologer reads the horoscope and talks with you, like a phone call. Free, up to 10 minutes. First, the birth details.")) : null,
         question("ആരുടെ ജാതകമാണ്?", "Whose horoscope is it?"),
         h("div.form-stack", h("span.field-label", bi("പേര്", "Name")), name, h("span.field-label", bi("ആൺ / പെൺ", "Male / female")), h("div.big-choices", choices))];
       check = () => (!v.name.trim() ? fail("പേര് എഴുതുക", "Enter a name") : !v.gender ? fail("പുരുഷനോ സ്ത്രീയോ എന്ന് തിരഞ്ഞെടുക്കുക", "Choose male or female") : true);

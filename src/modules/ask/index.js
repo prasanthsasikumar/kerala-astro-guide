@@ -19,8 +19,8 @@ import { openSheet } from "../../ui/sheet.js";
 import { studyCard } from "../../ui/study-card.js";
 import { setNavGuard, clearNavGuard } from "../../lib/nav-guard.js";
 
-// 5 minutes; a shorter limit can be set for testing on the local dev server only (?limit=40)
-const CALL_LIMIT_SEC = (location.hostname === "127.0.0.1" && +new URLSearchParams(location.hash.split("?")[1]).get("limit")) || 5 * 60;
+// 10 minutes; a shorter limit can be set for testing on the local dev server only (?limit=40)
+const CALL_LIMIT_SEC = (location.hostname === "127.0.0.1" && +new URLSearchParams(location.hash.split("?")[1]).get("limit")) || 10 * 60;
 
 const ICON = {
   phone: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z"/></svg>',
@@ -129,6 +129,7 @@ async function callScreen(el, input) {
   let started = 0;
   let clock = 0;
   let session = null;
+  let callLang = lang(); // the language the call runs in; the server may pick Malayalam for Kerala
   let saveTimer = 0;
   let limitTimer = 0;
   // while a call is live, leaving the screen asks first (the call ends only if they agree)
@@ -149,7 +150,7 @@ async function callScreen(el, input) {
   };
   const person = () => ({ name: input.name, gender: input.gender, date: input.date, time: input.time, timeUnknown: !!input.timeUnknown, place: input.place });
   const payload = (end) => ({
-    ...session, person: person(), star, caller: { phone: getUI().phone || "" }, lang: lang(), startedAt: new Date(started || Date.now()).toISOString(),
+    ...session, person: person(), star, caller: { phone: getUI().phone || "" }, lang: callLang, startedAt: new Date(started || Date.now()).toISOString(),
     durationSec: started ? Math.round((Date.now() - started) / 1000) : 0, transcript: call?.transcript || [], end,
   });
   const saveLog = (end = false, beacon = false) => {
@@ -211,7 +212,7 @@ async function callScreen(el, input) {
       const res = await fetch("/api/live-token", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ lang: lang(), chart: facts }),
+        body: JSON.stringify({ lang: lang(), langChosen: !!getUI().langChosen, chart: facts }),
       });
       if (res.status === 429) {
         const why = (await res.json().catch(() => ({}))).error;
@@ -221,8 +222,9 @@ async function callScreen(el, input) {
         throw Object.assign(new Error(tx("ഒരുപാട് കോളുകൾ ആയി. കുറച്ചു കഴിഞ്ഞ് വിളിക്കുക.", "Too many calls. Please try again later.")), { code: "rate_limited" });
       }
       if (!res.ok) throw Object.assign(new Error(tx("ഇപ്പോൾ ബന്ധിപ്പിക്കാൻ കഴിയുന്നില്ല. കുറച്ചു കഴിഞ്ഞ് ശ്രമിക്കുക.", "Can't connect right now. Please try again shortly.")), { code: "token_" + res.status });
-      const { token, model, session: s } = await res.json();
+      const { token, model, session: s, lang: l } = await res.json();
       session = s;
+      callLang = l || lang();
       call = new LiveCall({
         token, model,
         greeting: tx("(ഫോൺ കോൾ ബന്ധിപ്പിച്ചു. ദയവായി അഭിവാദ്യം ചെയ്ത് തുടങ്ങുക.)", "(The phone call has connected. Please greet and begin.)"),
@@ -250,7 +252,7 @@ async function callScreen(el, input) {
                 finish("time_limit");
                 c?.hangup();
                 setStatus("ended");
-                status.textContent = tx("5 മിനിറ്റ് കഴിഞ്ഞതിനാൽ കോൾ അവസാനിച്ചു. വീണ്ടും വിളിക്കാം.", "The 5-minute call has ended. You can call again.");
+                status.textContent = tx("10 മിനിറ്റ് കഴിഞ്ഞതിനാൽ കോൾ അവസാനിച്ചു. വീണ്ടും വിളിക്കാം.", "The 10-minute call has ended. You can call again.");
               }
             }, 1000);
             saveLog(false);

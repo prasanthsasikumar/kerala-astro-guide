@@ -43,14 +43,15 @@ let ui = read(KEY_UI, { lang: "en" });
 // a shared link can pick the language, e.g. astro.flowsxr.com/ml or ?lang=ml; it is remembered on this device
 if (typeof location !== "undefined") {
   const want = new URLSearchParams(location.search).get("lang") || location.pathname.match(/^\/([a-z]{2})\/?$/)?.[1];
-  if (["ml", "en", "hi", "ta", "te", "kn"].includes(want) && ui.lang !== want) {
-    ui = { ...ui, lang: want };
+  if (["ml", "en", "hi", "ta", "te", "kn"].includes(want) && (ui.lang !== want || !ui.langChosen)) {
+    ui = { ...ui, lang: want, langChosen: true };
     write(KEY_UI, ui);
   }
 }
 export const getUI = () => ui;
+// langChosen: the person picked the language (link or language button), so a call never overrides it
 export function setUI(patch) {
-  ui = { ...ui, ...patch };
+  ui = { ...ui, ...patch, ...("lang" in patch ? { langChosen: true } : {}) };
   write(KEY_UI, ui);
   emit("ui");
 }

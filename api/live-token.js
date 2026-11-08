@@ -23,7 +23,7 @@ async function callsToday(token) {
 
 const LIMITS = { chart: 12000 };
 const RATE = { windowMs: 60 * 60 * 1000, max: 6 }; // calls per IP per hour, best effort per instance
-const CALL_MINUTES = 5; // longest call; the browser also ends it at 5:00
+const CALL_MINUTES = 10; // longest call; the browser also ends it at 10:00
 
 // How the astrologer should speak in each supported language.
 const SPEECH = {
@@ -40,7 +40,7 @@ const PROMPT = (lang) => `You are on a live VOICE CALL as the astrologer ("ജ�
 SPEECH:
 - ${SPEECH[lang] || SPEECH.ml}
 - The horoscope follows Kerala conventions (sidereal, Lahiri). If the caller's region does things differently (for example North Indian charts), you may mention that gently, but use the facts given.
-- Calls last at most 5 minutes, so be concise. If you are told the call is about to end, conclude warmly in one or two sentences and say goodbye.
+- Calls last at most 10 minutes, so be concise. If you are told the call is about to end, conclude warmly in one or two sentences and say goodbye.
 - This is a phone call: keep each turn short (2 to 4 sentences), then pause and let them talk. Ask a gentle follow-up question when it helps. Never read out lists or headings.
 - Say dates and numbers the way people speak them (for example "അടുത്ത വർഷം ഏപ്രിൽ വരെ").
 - If they interrupt, stop and listen.
@@ -100,6 +100,14 @@ export async function handleLiveToken(request, env = process.env) {
     }
   }
 
+  // Callers in Kerala who never picked a language get the call in Malayalam: many asked for it
+  // mid-call in English calls, and Malayalam spoken into an English call was often misheard.
+  const asked = SPEECH[body.lang] ? body.lang : "ml";
+  const inKerala = request.headers.get("x-vercel-ip-country") === "IN" && request.headers.get("x-vercel-ip-country-region") === "KL";
+  const lang = !body.langChosen && inKerala ? "ml" : asked;
+  // speech recognition hint: the call's language first, then English (or Malayalam for an English call)
+  const heard = lang === "en" ? ["en-IN", "ml-IN"] : [`${lang}-IN`, "en-IN"];
+
   const model = "models/" + (env.LIVE_MODEL || "gemini-3.8-live");
   const setup = {
     model,
@@ -108,12 +116,12 @@ export async function handleLiveToken(request, env = process.env) {
       temperature: 0.8,
       speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: env.LIVE_VOICE || "Charon" } } },
     },
-    systemInstruction: { parts: [{ text: PROMPT(SPEECH[body.lang] ? body.lang : "ml") + chart }] },
+    systemInstruction: { parts: [{ text: PROMPT(lang) + chart }] },
     contextWindowCompression: { slidingWindow: {} },
     // the server never cuts the astrologer off: any sneeze, cough or laugh used to stop it mid-sentence.
     // The page stops playback itself when the caller really talks over it (see LiveCall in call.js).
     realtimeInputConfig: { activityHandling: "NO_INTERRUPTION" },
-    inputAudioTranscription: {},
+    inputAudioTranscription: { languageCodes: heard },
     outputAudioTranscription: {},
   };
   const now = Date.now();
@@ -137,7 +145,7 @@ export async function handleLiveToken(request, env = process.env) {
   if (env.BLOB_READ_WRITE_TOKEN) {
     await put(`quota/${istDay()}/${session.id}`, "1", { access: "private", addRandomSuffix: false, contentType: "text/plain", token: env.BLOB_READ_WRITE_TOKEN }).catch((e) => console.error("quota mark", e?.message));
   }
-  return json(200, { token: tok.name, model, session });
+  return json(200, { token: tok.name, model, session, lang });
 }
 
 export const handle = handleLiveToken;
