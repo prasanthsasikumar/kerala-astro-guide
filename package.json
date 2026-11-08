@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@vercel/blob": "^2.8.0",
+    "posthog-js": "^1.447.3",
     "qrcode-generator": "^1.4.4",
     "sweph-wasm": "^2.6.9"
   },

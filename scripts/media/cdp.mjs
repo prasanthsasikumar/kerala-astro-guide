@@ -76,11 +76,11 @@ async function installGuard({ send, on, guard, log }) {
       log.blocked.push(request.method + " " + u.pathname);
       const out = canned(u.pathname, request.postData || "");
       await send("Fetch.fulfillRequest", { requestId, responseCode: out ? 200 : 503, responseHeaders: [{ name: "content-type", value: "application/json" }], body: Buffer.from(JSON.stringify(out || { error: "staged" })).toString("base64") });
-    } else if (/(^|\.)google-analytics\.com$|(^|\.)googletagmanager\.com$|(^|\.)analytics\.google\.com$/.test(u.host)) {
+    } else if (/(^|\.)google-analytics\.com$|(^|\.)googletagmanager\.com$|(^|\.)analytics\.google\.com$|(^|\.)posthog\.com$/.test(u.host)) {
       await send("Fetch.failRequest", { requestId, errorReason: "BlockedByClient" });
     } else {
       await send("Fetch.continueRequest", { requestId });
     }
   });
-  await send("Fetch.enable", { patterns: [{ urlPattern: `*://${host}/api/*` }, { urlPattern: "*google-analytics.com*" }, { urlPattern: "*googletagmanager.com*" }, { urlPattern: "*analytics.google.com*" }] });
+  await send("Fetch.enable", { patterns: [{ urlPattern: `*://${host}/api/*` }, { urlPattern: "*google-analytics.com*" }, { urlPattern: "*googletagmanager.com*" }, { urlPattern: "*analytics.google.com*" }, { urlPattern: "*posthog.com*" }] });
 }
